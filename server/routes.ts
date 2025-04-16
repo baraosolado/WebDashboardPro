@@ -369,6 +369,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Armazenar usuários registrados em memória
+  const registeredUsers: { email: string; username: string; password: string }[] = [];
+  
+  // Função para verificar credenciais
+  const checkCredentials = (email: string, password: string) => {
+    // Verificar usuário administrador fixo
+    if ((email === "admin" || email === "admin@fintrack.com") && password === "123456") {
+      return { valid: true, username: "admin", email: "admin@fintrack.com" };
+    }
+    
+    // Verificar usuários registrados
+    const user = registeredUsers.find(u => 
+      (u.email === email || u.username === email) && u.password === password
+    );
+    
+    if (user) {
+      return { valid: true, username: user.username, email: user.email };
+    }
+    
+    return { valid: false };
+  };
+  
   // Verificar login do usuário
   apiRouter.post("/auth/login", async (req: Request, res: Response) => {
     try {
@@ -376,9 +398,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Login request:", { username, password });
       
-      // Simular verificação de credenciais
-      // Em uma implementação real, consultaria o banco de dados
-      if ((username === "admin" || username === "admin@fintrack.com") && password === "123456") {
+      // Verificar credenciais
+      const result = checkCredentials(username, password);
+      
+      if (result.valid) {
         // Enviar para o webhook (como seria feito com Supabase e n8n)
         try {
           await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
@@ -389,8 +412,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: JSON.stringify({
               action: "login",
               entityType: "user",
-              entityId: username,
-              data: { email: username, password, timestamp: new Date().toISOString() },
+              entityId: result.email,
+              data: { email: result.email, password, timestamp: new Date().toISOString() },
             }),
           });
         } catch (error) {
@@ -401,7 +424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Content-Type', 'application/json');
         res.status(200).json({
           success: true,
-          user: { username }
+          user: { username: result.username }
         });
       } else {
         // Garantir que o Content-Type seja application/json
@@ -426,8 +449,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Signup request:", { username, email });
       
-      // Simular registro de usuário
-      // Em uma implementação real, salvaria no banco de dados
+      // Verificar se o usuário ou email já existe
+      const userExists = registeredUsers.some(u => 
+        u.email === email || u.username === username
+      );
+      
+      if (userExists) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(400).json({
+          success: false,
+          message: "Usuário ou email já cadastrado"
+        });
+      }
+      
+      // Adicionar usuário à lista de registrados
+      registeredUsers.push({ username, email, password });
+      console.log("Usuário registrado:", { username, email });
+      console.log("Total de usuários:", registeredUsers.length);
       
       // Enviar para o webhook (como seria feito com Supabase e n8n)
       try {

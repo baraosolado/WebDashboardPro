@@ -1,0 +1,350 @@
+{
+  "name": "FinTrack - Integração Supabase",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fintrack",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "operation": "equal",
+              "value2": "signup"
+            }
+          ]
+        }
+      },
+      "id": "is-signup",
+      "name": "É Cadastro?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "operation": "equal",
+              "value2": "login"
+            }
+          ]
+        }
+      },
+      "id": "is-login",
+      "name": "É Login?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        450,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "operation": "equal",
+              "value2": "addFundsToGoal"
+            }
+          ]
+        }
+      },
+      "id": "is-add-funds",
+      "name": "É Adicionar Fundos?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        450,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "supabaseApiKey",
+        "operation": "upsert",
+        "table": "users",
+        "schema": "public",
+        "additionalFields": {}
+      },
+      "id": "create-user",
+      "name": "Criar Usuário (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        650,
+        250
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "supabaseApiKey",
+        "operation": "select",
+        "table": "users",
+        "schema": "public",
+        "additionalFields": {}
+      },
+      "id": "verify-user",
+      "name": "Verificar Usuário (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        650,
+        450
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "supabaseApiKey",
+        "operation": "update",
+        "table": "goals",
+        "schema": "public",
+        "additionalFields": {}
+      },
+      "id": "update-goal",
+      "name": "Atualizar Meta (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        650,
+        600
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "email",
+              "value": "={{$json.data.email}}"
+            },
+            {
+              "name": "password",
+              "value": "={{$json.data.password}}"
+            },
+            {
+              "name": "username",
+              "value": "={{$json.data.username || $json.data.email.split('@')[0]}}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{$now}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "map-signup-data",
+      "name": "Mapear Dados do Cadastro",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        550,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "email",
+              "value": "={{$json.data.email}}"
+            },
+            {
+              "name": "password",
+              "value": "={{$json.data.password}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "map-login-data",
+      "name": "Mapear Dados do Login",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        550,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "goalId",
+              "value": "={{$json.data.goalId}}"
+            },
+            {
+              "name": "amount",
+              "value": "={{$json.data.amount}}"
+            },
+            {
+              "name": "currentAmount",
+              "value": "={{$json.data.currentAmount}}"
+            },
+            {
+              "name": "updated_at",
+              "value": "={{$now}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "map-goal-data",
+      "name": "Mapear Dados da Meta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        550,
+        600
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "É Cadastro?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Cadastro?": {
+      "main": [
+        [
+          {
+            "node": "Mapear Dados do Cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É Login?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Login?": {
+      "main": [
+        [
+          {
+            "node": "Mapear Dados do Login",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É Adicionar Fundos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É Adicionar Fundos?": {
+      "main": [
+        [
+          {
+            "node": "Mapear Dados da Meta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Mapear Dados do Cadastro": {
+      "main": [
+        [
+          {
+            "node": "Criar Usuário (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Dados do Login": {
+      "main": [
+        [
+          {
+            "node": "Verificar Usuário (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Dados da Meta": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Meta (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "ee6e66d4-90c4-4d31-b97e-88228052a3bb",
+  "id": "102",
+  "meta": {
+    "instanceId": "3c8b7f1e42255fb5aacaef0eb66e35b9ba0e385c7c78e40d8a06655c765349c6"
+  },
+  "tags": [
+    {
+      "id": 1,
+      "name": "FinTrack"
+    }
+  ]
+}
