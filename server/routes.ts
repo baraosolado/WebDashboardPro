@@ -374,6 +374,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { username, password } = req.body;
       
+      console.log("Login request:", { username, password });
+      
       // Simular verificação de credenciais
       // Em uma implementação real, consultaria o banco de dados
       if (username === "admin" && password === "123456") {
@@ -395,17 +397,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Erro ao enviar para webhook:", error);
         }
         
+        // Garantir que o Content-Type seja application/json
+        res.setHeader('Content-Type', 'application/json');
         res.status(200).json({
           success: true,
           user: { username }
         });
       } else {
+        // Garantir que o Content-Type seja application/json
+        res.setHeader('Content-Type', 'application/json');
         res.status(401).json({
           success: false,
           message: "Credenciais inválidas"
         });
       }
     } catch (error) {
+      console.error("Erro no login:", error);
+      // Garantir que o Content-Type seja application/json
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -414,6 +423,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   apiRouter.post("/auth/signup", async (req: Request, res: Response) => {
     try {
       const { username, email, password } = req.body;
+      
+      console.log("Signup request:", { username, email });
       
       // Simular registro de usuário
       // Em uma implementação real, salvaria no banco de dados
@@ -436,11 +447,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Erro ao enviar para webhook:", error);
       }
       
+      // Garantir que o Content-Type seja application/json
+      res.setHeader('Content-Type', 'application/json');
       res.status(201).json({
         success: true,
         user: { username, email }
       });
     } catch (error) {
+      console.error("Erro no signup:", error);
+      // Garantir que o Content-Type seja application/json
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ message: "Internal server error" });
     }
   });
