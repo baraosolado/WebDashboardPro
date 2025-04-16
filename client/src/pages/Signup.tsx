@@ -68,33 +68,40 @@ export default function Signup() {
       // Enviar dados de cadastro para o webhook
       await sendToWebhook(values, "signup");
       
-      // Para este protótipo, simular cadastro com sucesso após 1 segundo
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Em uma implementação real, você enviaria uma solicitação de registro para o backend
-      // e integraria com Supabase e n8n
-      /*
-      const response = await apiRequest('POST', '/api/auth/signup', values);
-      const data = await response.json();
-      
-      // Guardar token, ID do usuário, etc em localStorage ou cookies
-      localStorage.setItem('token', data.token);
-      */
-      
-      // Usar a função login do AuthContext
-      login(values.username);
-      
-      toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Bem-vindo ao FinTrack.",
-      });
-      
-      // Redirecionar para o dashboard
-      navigate("/");
-    } catch (error) {
+      // Enviar dados para o backend
+      try {
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || "Erro ao criar conta");
+        }
+        
+        // Usar a função login do AuthContext
+        login(data.user.username);
+        
+        toast({
+          title: "Cadastro realizado com sucesso!",
+          description: "Bem-vindo ao FinTrack.",
+        });
+        
+        // Redirecionar para o dashboard
+        navigate("/");
+      } catch (error: any) {
+        console.error("Erro ao fazer cadastro:", error);
+        throw new Error(error.message || "Erro ao fazer cadastro");
+      }
+    } catch (error: any) {
       toast({
         title: "Erro ao fazer cadastro",
-        description: "Verifique seus dados e tente novamente.",
+        description: error.message || "Verifique seus dados e tente novamente.",
         variant: "destructive",
       });
     } finally {

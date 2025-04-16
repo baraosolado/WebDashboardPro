@@ -369,6 +369,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Verificar login do usuário
+  apiRouter.post("/auth/login", async (req: Request, res: Response) => {
+    try {
+      const { username, password } = req.body;
+      
+      // Simular verificação de credenciais
+      // Em uma implementação real, consultaria o banco de dados
+      if (username === "admin" && password === "123456") {
+        // Enviar para o webhook (como seria feito com Supabase e n8n)
+        try {
+          await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "login",
+              entityType: "user",
+              entityId: username,
+              data: { username, timestamp: new Date().toISOString() },
+            }),
+          });
+        } catch (error) {
+          console.error("Erro ao enviar para webhook:", error);
+        }
+        
+        res.status(200).json({
+          success: true,
+          user: { username }
+        });
+      } else {
+        res.status(401).json({
+          success: false,
+          message: "Credenciais inválidas"
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
+  // Registrar novo usuário
+  apiRouter.post("/auth/signup", async (req: Request, res: Response) => {
+    try {
+      const { username, email, password } = req.body;
+      
+      // Simular registro de usuário
+      // Em uma implementação real, salvaria no banco de dados
+      
+      // Enviar para o webhook (como seria feito com Supabase e n8n)
+      try {
+        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "signup",
+            entityType: "user",
+            entityId: username,
+            data: { username, email, timestamp: new Date().toISOString() },
+          }),
+        });
+      } catch (error) {
+        console.error("Erro ao enviar para webhook:", error);
+      }
+      
+      res.status(201).json({
+        success: true,
+        user: { username, email }
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
   // Mount API router
   app.use("/api", apiRouter);
 

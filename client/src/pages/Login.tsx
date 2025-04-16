@@ -61,33 +61,40 @@ export default function Login() {
       // Enviar dados de login para o webhook
       await sendToWebhook(values, "login");
       
-      // Para este protótipo, simular autenticação com sucesso após 1 segundo
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Em uma implementação real, você enviaria uma solicitação de login para o backend
-      // e verificaria a resposta do Supabase e n8n aqui
-      /*
-      const response = await apiRequest('POST', '/api/auth/login', values);
-      const data = await response.json();
-      
-      // Guardar token, ID do usuário, etc em localStorage ou cookies
-      localStorage.setItem('token', data.token);
-      */
-      
-      // Usar a função login do AuthContext
-      login(values.username);
-      
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao FinTrack.",
-      });
-      
-      // Redirecionar para o dashboard
-      navigate("/");
-    } catch (error) {
+      // Verificar credenciais no backend
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || "Credenciais inválidas");
+        }
+        
+        // Usar a função login do AuthContext
+        login(data.user.username);
+        
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Bem-vindo ao FinTrack.",
+        });
+        
+        // Redirecionar para o dashboard
+        navigate("/");
+      } catch (error: any) {
+        console.error("Erro ao fazer login:", error);
+        throw new Error(error.message || "Erro ao fazer login");
+      }
+    } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
-        description: "Verifique suas credenciais e tente novamente.",
+        description: error.message || "Verifique suas credenciais e tente novamente.",
         variant: "destructive",
       });
     } finally {
