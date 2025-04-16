@@ -60,14 +60,16 @@ export class MemStorage implements IStorage {
   private categories: Map<number, Category>;
   private transactions: Map<number, Transaction>;
   private budgets: Map<number, Budget>;
-  private currentId: { users: number; categories: number; transactions: number; budgets: number };
+  private goals: Map<number, Goal>;
+  private currentId: { users: number; categories: number; transactions: number; budgets: number; goals: number };
 
   constructor() {
     this.users = new Map();
     this.categories = new Map();
     this.transactions = new Map();
     this.budgets = new Map();
-    this.currentId = { users: 1, categories: 1, transactions: 1, budgets: 1 };
+    this.goals = new Map();
+    this.currentId = { users: 1, categories: 1, transactions: 1, budgets: 1, goals: 1 };
   }
 
   // User methods
@@ -222,6 +224,53 @@ export class MemStorage implements IStorage {
 
   async deleteBudget(id: number): Promise<boolean> {
     return this.budgets.delete(id);
+  }
+  
+  // Goal methods
+  async getGoals(): Promise<Goal[]> {
+    return Array.from(this.goals.values())
+      .sort((a, b) => new Date(b.targetDate).getTime() - new Date(a.targetDate).getTime());
+  }
+  
+  async getGoal(id: number): Promise<Goal | undefined> {
+    return this.goals.get(id);
+  }
+  
+  async createGoal(goal: InsertGoal): Promise<Goal> {
+    const id = this.currentId.goals++;
+    const newGoal: Goal = { 
+      ...goal, 
+      id,
+      currentAmount: goal.currentAmount || 0,
+      targetDate: goal.targetDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default: 30 days from now
+    };
+    this.goals.set(id, newGoal);
+    return newGoal;
+  }
+  
+  async updateGoal(id: number, goalUpdate: Partial<InsertGoal>): Promise<Goal | undefined> {
+    const goal = this.goals.get(id);
+    if (!goal) return undefined;
+    
+    const updatedGoal: Goal = { ...goal, ...goalUpdate };
+    this.goals.set(id, updatedGoal);
+    return updatedGoal;
+  }
+  
+  async addFundsToGoal(id: number, amount: number): Promise<Goal | undefined> {
+    const goal = this.goals.get(id);
+    if (!goal) return undefined;
+    
+    const updatedGoal: Goal = { 
+      ...goal, 
+      currentAmount: goal.currentAmount + amount
+    };
+    this.goals.set(id, updatedGoal);
+    return updatedGoal;
+  }
+  
+  async deleteGoal(id: number): Promise<boolean> {
+    return this.goals.delete(id);
   }
 
   // Summary methods
@@ -451,6 +500,35 @@ export class MemStorage implements IStorage {
         notes: 'Transporte mensal'
       });
     }
+    
+    // Create sample goals
+    const goals: InsertGoal[] = [
+      {
+        name: 'Viagem de férias',
+        targetAmount: 5000,
+        currentAmount: 2500,
+        targetDate: new Date(now.getFullYear(), now.getMonth() + 6, 1),
+        description: 'Economia para viagem de férias no final do ano'
+      },
+      {
+        name: 'Comprar notebook novo',
+        targetAmount: 4000,
+        currentAmount: 1500,
+        targetDate: new Date(now.getFullYear(), now.getMonth() + 3, 15),
+        description: 'Substituir notebook antigo'
+      },
+      {
+        name: 'Fundo de emergência',
+        targetAmount: 10000,
+        currentAmount: 3000,
+        targetDate: new Date(now.getFullYear() + 1, 0, 1),
+        description: 'Reserva financeira para emergências'
+      }
+    ];
+    
+    for (const goal of goals) {
+      await this.createGoal(goal);
+    }
   }
 }
 
@@ -679,6 +757,66 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(budgets)
       .where(eq(budgets.id, id));
+    return result.rowCount > 0;
+  }
+  
+  // Goal methods
+  async getGoals(): Promise<Goal[]> {
+    return db.select()
+      .from(goals)
+      .orderBy(desc(goals.targetDate));
+  }
+  
+  async getGoal(id: number): Promise<Goal | undefined> {
+    const [goal] = await db.select()
+      .from(goals)
+      .where(eq(goals.id, id));
+    return goal || undefined;
+  }
+  
+  async createGoal(goal: InsertGoal): Promise<Goal> {
+    const [newGoal] = await db
+      .insert(goals)
+      .values({
+        ...goal,
+        currentAmount: goal.currentAmount || 0,
+        description: goal.description || null
+      })
+      .returning();
+    return newGoal;
+  }
+  
+  async updateGoal(id: number, goalUpdate: Partial<InsertGoal>): Promise<Goal | undefined> {
+    const [updatedGoal] = await db
+      .update(goals)
+      .set(goalUpdate)
+      .where(eq(goals.id, id))
+      .returning();
+    return updatedGoal || undefined;
+  }
+  
+  async addFundsToGoal(id: number, amount: number): Promise<Goal | undefined> {
+    const [goal] = await db.select()
+      .from(goals)
+      .where(eq(goals.id, id));
+    
+    if (!goal) return undefined;
+    
+    const [updatedGoal] = await db
+      .update(goals)
+      .set({
+        currentAmount: goal.currentAmount + amount
+      })
+      .where(eq(goals.id, id))
+      .returning();
+    
+    return updatedGoal || undefined;
+  }
+  
+  async deleteGoal(id: number): Promise<boolean> {
+    const result = await db
+      .delete(goals)
+      .where(eq(goals.id, id));
     return result.rowCount > 0;
   }
   
@@ -938,6 +1076,33 @@ export class DatabaseStorage implements IStorage {
       
       await db.insert(transactions).values(historicalTransactions);
     }
+    
+    // Create sample goals
+    const goalsData: InsertGoal[] = [
+      {
+        name: 'Viagem de férias',
+        targetAmount: 5000,
+        currentAmount: 2500,
+        targetDate: new Date(now.getFullYear(), now.getMonth() + 6, 1),
+        description: 'Economia para viagem de férias no final do ano'
+      },
+      {
+        name: 'Comprar notebook novo',
+        targetAmount: 4000,
+        currentAmount: 1500,
+        targetDate: new Date(now.getFullYear(), now.getMonth() + 3, 15),
+        description: 'Substituir notebook antigo'
+      },
+      {
+        name: 'Fundo de emergência',
+        targetAmount: 10000,
+        currentAmount: 3000,
+        targetDate: new Date(now.getFullYear() + 1, 0, 1),
+        description: 'Reserva financeira para emergências'
+      }
+    ];
+    
+    await db.insert(goals).values(goalsData);
   }
 }
 

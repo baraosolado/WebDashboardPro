@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { 
   insertTransactionSchema, 
   insertBudgetSchema, 
-  insertCategorySchema 
+  insertCategorySchema,
+  insertGoalSchema
 } from "@shared/schema";
 import { z } from "zod";
 
