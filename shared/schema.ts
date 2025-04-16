@@ -41,6 +41,15 @@ export const budgets = pgTable("budgets", {
   period: text("period").notNull().default("monthly"),
 });
 
+export const goals = pgTable("goals", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  targetAmount: real("target_amount").notNull(),
+  currentAmount: real("current_amount").notNull().default(0),
+  targetDate: timestamp("target_date").notNull(),
+  description: text("description"),
+});
+
 // Define relationships
 export const categoriesRelations = relations(categories, ({ many }) => ({
   transactions: many(transactions),
@@ -101,6 +110,20 @@ export const insertBudgetSchema = createInsertSchema(budgets)
     amount: z.coerce.number().positive(),
   });
 
+export const insertGoalSchema = createInsertSchema(goals)
+  .pick({
+    name: true,
+    targetAmount: true,
+    currentAmount: true,
+    targetDate: true,
+    description: true,
+  })
+  .extend({
+    targetAmount: z.coerce.number().positive(),
+    currentAmount: z.coerce.number().min(0),
+    targetDate: z.coerce.date(),
+  });
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -113,6 +136,9 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
 export type Budget = typeof budgets.$inferSelect;
 export type InsertBudget = z.infer<typeof insertBudgetSchema>;
+
+export type Goal = typeof goals.$inferSelect;
+export type InsertGoal = z.infer<typeof insertGoalSchema>;
 
 // Extended types for frontend use
 export type TransactionWithCategory = Transaction & {

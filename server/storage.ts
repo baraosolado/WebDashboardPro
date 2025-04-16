@@ -3,6 +3,7 @@ import {
   categories, Category, InsertCategory,
   transactions, Transaction, InsertTransaction,
   budgets, Budget, InsertBudget,
+  goals, Goal, InsertGoal,
   TransactionWithCategory, BudgetWithCategory,
   TransactionSummary, CategorySummary, MonthlyTrend
 } from "@shared/schema";
@@ -36,6 +37,14 @@ export interface IStorage {
   createBudget(budget: InsertBudget): Promise<Budget>;
   updateBudget(id: number, budget: Partial<InsertBudget>): Promise<Budget | undefined>;
   deleteBudget(id: number): Promise<boolean>;
+  
+  // Goal methods
+  getGoals(): Promise<Goal[]>;
+  getGoal(id: number): Promise<Goal | undefined>;
+  createGoal(goal: InsertGoal): Promise<Goal>;
+  updateGoal(id: number, goal: Partial<InsertGoal>): Promise<Goal | undefined>;
+  addFundsToGoal(id: number, amount: number): Promise<Goal | undefined>;
+  deleteGoal(id: number): Promise<boolean>;
   
   // Summary methods
   getTransactionSummary(): Promise<TransactionSummary>;

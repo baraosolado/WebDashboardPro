@@ -255,6 +255,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(trends);
   });
   
+  // Goals routes
+  apiRouter.get("/goals", async (_req: Request, res: Response) => {
+    const goals = await storage.getGoals();
+    res.json(goals);
+  });
+  
+  apiRouter.get("/goals/:id", async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID" });
+    }
+    
+    const goal = await storage.getGoal(id);
+    if (!goal) {
+      return res.status(404).json({ message: "Goal not found" });
+    }
+    
+    res.json(goal);
+  });
+  
+  apiRouter.post("/goals", async (req: Request, res: Response) => {
+    try {
+      const validatedData = insertGoalSchema.parse(req.body);
+      const goal = await storage.createGoal(validatedData);
+      res.status(201).json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+  
+  apiRouter.put("/goals/:id", async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID" });
+    }
+    
+    try {
+      const validatedData = insertGoalSchema.partial().parse(req.body);
+      const goal = await storage.updateGoal(id, validatedData);
+      
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+      
+      res.json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+  
+  apiRouter.post("/goals/:id/add-funds", async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID" });
+    }
+    
+    try {
+      const { amount } = z.object({ amount: z.coerce.number().positive() }).parse(req.body);
+      const goal = await storage.addFundsToGoal(id, amount);
+      
+      if (!goal) {
+        return res.status(404).json({ message: "Goal not found" });
+      }
+      
+      res.json(goal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: error.errors });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+  
+  apiRouter.delete("/goals/:id", async (req: Request, res: Response) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid ID" });
+    }
+    
+    const success = await storage.deleteGoal(id);
+    if (!success) {
+      return res.status(404).json({ message: "Goal not found" });
+    }
+    
+    res.status(204).end();
+  });
+  
   // Mount API router
   app.use("/api", apiRouter);
 
