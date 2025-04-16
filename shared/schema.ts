@@ -67,27 +67,39 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
 });
 
-export const insertCategorySchema = createInsertSchema(categories).pick({
-  name: true,
-  color: true,
-  icon: true,
-  type: true,
-});
+export const insertCategorySchema = createInsertSchema(categories)
+  .pick({
+    name: true,
+    color: true,
+    icon: true,
+    type: true,
+  });  // Não precisamos de coerção para categorias, todos são strings ou enums
 
-export const insertTransactionSchema = createInsertSchema(transactions).pick({
-  description: true,
-  amount: true,
-  date: true,
-  type: true,
-  categoryId: true,
-  notes: true,
-});
+export const insertTransactionSchema = createInsertSchema(transactions)
+  .pick({
+    description: true,
+    amount: true,
+    date: true,
+    type: true,
+    categoryId: true,
+    notes: true,
+  })
+  .extend({
+    amount: z.coerce.number().positive(),
+    categoryId: z.coerce.number().int(),
+    date: z.coerce.date(),
+  });
 
-export const insertBudgetSchema = createInsertSchema(budgets).pick({
-  categoryId: true,
-  amount: true,
-  period: true,
-});
+export const insertBudgetSchema = createInsertSchema(budgets)
+  .pick({
+    categoryId: true,
+    amount: true,
+    period: true,
+  })
+  .extend({
+    categoryId: z.coerce.number().int(),
+    amount: z.coerce.number().positive(),
+  });
 
 // Types
 export type User = typeof users.$inferSelect;
