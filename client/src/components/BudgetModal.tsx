@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -223,6 +224,9 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
           <DialogTitle>
             {budgetId ? "Editar Orçamento" : "Novo Orçamento"}
           </DialogTitle>
+          <DialogDescription>
+            {budgetId ? "Edite as informações do orçamento abaixo." : "Preencha o formulário para criar um novo orçamento."}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoadingBudget && budgetId ? (

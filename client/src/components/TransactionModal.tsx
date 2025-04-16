@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -68,6 +69,14 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     enabled: !!transactionId,
   });
 
+  // Formatar data atual para formato YYYY-MM-DD
+  const formatDateForInput = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Configuração do formulário
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -76,7 +85,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
       description: "",
       amount: 0,
       categoryId: 0,
-      date: new Date().toISOString().substring(0, 10),
+      date: formatDateForInput(new Date()),
       notes: "",
     },
   });
@@ -84,23 +93,37 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Atualizar formulário quando carregar a transação
   useEffect(() => {
     if (transaction) {
-      const date = new Date(transaction.date).toISOString().substring(0, 10);
-      
-      form.reset({
-        type: transaction.type,
-        description: transaction.description,
-        amount: transaction.amount,
-        categoryId: transaction.categoryId,
-        date: date,
-        notes: transaction.notes || "",
-      });
+      try {
+        const transactionDate = new Date(transaction.date);
+        const formattedDate = formatDateForInput(transactionDate);
+        
+        form.reset({
+          type: transaction.type,
+          description: transaction.description,
+          amount: transaction.amount,
+          categoryId: transaction.categoryId,
+          date: formattedDate,
+          notes: transaction.notes || "",
+        });
+      } catch (error) {
+        console.error("Erro ao formatar data da transação:", error);
+        // Usar data atual como fallback
+        form.reset({
+          type: transaction.type,
+          description: transaction.description,
+          amount: transaction.amount,
+          categoryId: transaction.categoryId,
+          date: formatDateForInput(new Date()),
+          notes: transaction.notes || "",
+        });
+      }
     } else {
       form.reset({
         type: "expense",
         description: "",
         amount: 0,
         categoryId: 0,
-        date: new Date().toISOString().substring(0, 10),
+        date: formatDateForInput(new Date()),
         notes: "",
       });
     }
@@ -250,6 +273,9 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
           <DialogTitle>
             {transactionId ? "Editar Transação" : "Nova Transação"}
           </DialogTitle>
+          <DialogDescription>
+            {transactionId ? "Edite as informações da transação abaixo." : "Preencha o formulário para criar uma nova transação."}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoadingTransaction && transactionId ? (
