@@ -259,7 +259,7 @@
             },
             {
               "name": "username",
-              "value": "={{ $json.data.username || $json.data.email.split('@')[0] }}"
+              "value": "={{ $json.data.username }}"
             },
             {
               "name": "created_at",
@@ -285,6 +285,10 @@
             {
               "name": "email",
               "value": "={{ $json.data.email }}"
+            },
+            {
+              "name": "username",
+              "value": "={{ $json.data.username }}"
             },
             {
               "name": "password",

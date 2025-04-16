@@ -413,7 +413,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               action: "login",
               entityType: "user",
               entityId: result.email,
-              data: { email: result.email, password, timestamp: new Date().toISOString() },
+              data: { 
+                email: result.email, 
+                username: result.username, 
+                password, 
+                timestamp: new Date().toISOString() 
+              },
             }),
           });
         } catch (error) {
@@ -478,7 +483,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             action: "signup",
             entityType: "user",
             entityId: email,
-            data: { email, password, timestamp: new Date().toISOString() },
+            data: { email, username, password, timestamp: new Date().toISOString() },
           }),
         });
       } catch (error) {
