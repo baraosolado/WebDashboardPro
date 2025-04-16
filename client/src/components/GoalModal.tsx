@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { Goal } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,7 +57,7 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   
   // Buscar meta se estiver editando ou adicionando fundos
-  const { data: goal, isLoading: isLoadingGoal } = useQuery({
+  const { data: goal, isLoading: isLoadingGoal } = useQuery<Goal>({
     queryKey: ["/api/goals", goalId],
     queryFn: goalId ? getQueryFn({ on401: "throw" }) : () => null,
     enabled: !!goalId,

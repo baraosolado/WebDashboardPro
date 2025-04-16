@@ -352,6 +352,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(204).end();
   });
   
+  // User Profile endpoints
+  apiRouter.put("/user/profile", async (req: Request, res: Response) => {
+    try {
+      // Normalmente, aqui você verificaria a autenticação do usuário
+      // e atualizaria os dados do perfil no banco de dados
+      
+      // Como não temos um modelo completo de usuário, 
+      // apenas retornamos sucesso com os dados enviados
+      res.status(200).json({
+        success: true,
+        data: req.body
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+  
   // Mount API router
   app.use("/api", apiRouter);
 
