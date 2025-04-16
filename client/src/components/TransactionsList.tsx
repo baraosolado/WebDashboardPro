@@ -1,36 +1,30 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { TransactionWithCategory } from "@shared/schema";
 import { formatCurrency, formatDate } from "@/lib/formats";
 import { CATEGORY_COLORS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import TransactionModal from "@/components/TransactionModal";
-import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import { Edit, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export default function TransactionsList() {
+  const [, navigate] = useLocation();
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<TransactionWithCategory | null>(null);
   
   const { data: transactions, isLoading } = useQuery<TransactionWithCategory[]>({
     queryKey: ['/api/transactions/recent']
   });
   
-  const handleEdit = (transaction: TransactionWithCategory) => {
-    setCurrentTransaction(transaction);
-    setShowTransactionModal(true);
-  };
-  
-  const handleDelete = (transaction: TransactionWithCategory) => {
-    setCurrentTransaction(transaction);
-    setShowDeleteModal(true);
-  };
-  
   const handleAddNew = () => {
     setCurrentTransaction(null);
     setShowTransactionModal(true);
+  };
+  
+  const goToTransactions = () => {
+    navigate("/transactions");
   };
   
   return (
@@ -64,7 +58,6 @@ export default function TransactionsList() {
                   <th className="text-left py-3 px-4 text-[#607D8B]">Descrição</th>
                   <th className="text-left py-3 px-4 text-[#607D8B]">Categoria</th>
                   <th className="text-left py-3 px-4 text-[#607D8B]">Valor</th>
-                  <th className="text-left py-3 px-4 text-[#607D8B]">Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -88,29 +81,11 @@ export default function TransactionsList() {
                         {transaction.type === 'expense' ? '- ' : '+ '}
                         {formatCurrency(transaction.amount)}
                       </td>
-                      <td className="py-3 px-4">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-[#2196F3] hover:text-[#1976D2] mr-1"
-                          onClick={() => handleEdit(transaction)}
-                        >
-                          <Edit size={18} />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-[#f44336] hover:text-[#d32f2f]"
-                          onClick={() => handleDelete(transaction)}
-                        >
-                          <Trash2 size={18} />
-                        </Button>
-                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-4 text-center text-gray-500">
+                    <td colSpan={4} className="py-4 text-center text-gray-500">
                       Nenhuma transação encontrada.
                     </td>
                   </tr>
@@ -121,7 +96,7 @@ export default function TransactionsList() {
         </div>
         
         <div className="mt-4 text-right">
-          <Button variant="link" className="text-[#2196F3]">
+          <Button variant="link" className="text-[#2196F3]" onClick={goToTransactions}>
             Ver todas as transações
           </Button>
         </div>
@@ -131,14 +106,7 @@ export default function TransactionsList() {
       <TransactionModal
         isOpen={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
-        transaction={currentTransaction}
-      />
-      
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        transaction={currentTransaction}
+        transactionId={currentTransaction?.id}
       />
     </>
   );

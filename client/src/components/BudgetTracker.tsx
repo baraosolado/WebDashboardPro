@@ -1,19 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { BudgetWithCategory } from "@shared/schema";
 import { formatCurrency, formatPercentage, getProgressBarColor } from "@/lib/formats";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BudgetTracker() {
+  const [, navigate] = useLocation();
   const { data: budgets, isLoading } = useQuery<BudgetWithCategory[]>({
     queryKey: ['/api/budgets']
   });
+  
+  const goToBudgets = () => {
+    navigate("/budgets");
+  };
   
   return (
     <div className="bg-white rounded-lg shadow p-5">
       <div className="flex justify-between items-center mb-4 pb-2 border-b">
         <h2 className="text-xl font-bold text-[#607D8B]">Controle de Orçamento</h2>
-        <Button className="bg-[#2196F3] hover:bg-[#1976D2]">
+        <Button className="bg-[#2196F3] hover:bg-[#1976D2]" onClick={goToBudgets}>
           Editar Orçamentos
         </Button>
       </div>
