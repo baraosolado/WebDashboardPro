@@ -74,7 +74,7 @@ export default function Transactions() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="income">Receita</SelectItem>
                   <SelectItem value="expense">Despesa</SelectItem>
                 </SelectContent>
@@ -87,7 +87,7 @@ export default function Transactions() {
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
+                  <SelectItem value="all">Todas</SelectItem>
                   {categories?.map((category: Category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
