@@ -22,13 +22,13 @@ export default function Header() {
             {NAV_ITEMS.map((item) => (
               <li key={item.path} className="ml-4">
                 <Link href={item.path}>
-                  <a 
+                  <span 
                     className={`text-white p-2 hover:bg-white/20 rounded transition-colors ${
                       location === item.path ? 'bg-white/20' : ''
                     }`}
                   >
                     {item.name}
-                  </a>
+                  </span>
                 </Link>
               </li>
             ))}
@@ -47,14 +47,14 @@ export default function Header() {
             <div className="flex flex-col pt-10">
               {NAV_ITEMS.map((item) => (
                 <Link key={item.path} href={item.path}>
-                  <a 
-                    className={`py-4 px-6 border-b border-gray-700 text-lg hover:bg-gray-700 transition-colors ${
+                  <span 
+                    className={`py-4 px-6 border-b border-gray-700 text-lg hover:bg-gray-700 transition-colors block ${
                       location === item.path ? 'bg-gray-700' : ''
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.name}
-                  </a>
+                  </span>
                 </Link>
               ))}
             </div>
