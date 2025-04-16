@@ -65,9 +65,6 @@ export default function Signup() {
     setLoading(true);
     
     try {
-      // Enviar dados de cadastro para o webhook
-      await sendToWebhook(values, "signup");
-      
       // Enviar dados para o backend
       try {
         const response = await fetch("/api/auth/signup", {
@@ -84,16 +81,14 @@ export default function Signup() {
           throw new Error(data.message || "Erro ao criar conta");
         }
         
-        // Usar a função login do AuthContext
-        login(data.user.username);
-        
         toast({
           title: "Cadastro realizado com sucesso!",
-          description: "Bem-vindo ao FinTrack.",
+          description: "Faça login para continuar.",
+          variant: "default",
         });
         
-        // Redirecionar para o dashboard
-        navigate("/");
+        // Redirecionar para a página de login
+        navigate("/login");
       } catch (error: any) {
         console.error("Erro ao fazer cadastro:", error);
         throw new Error(error.message || "Erro ao fazer cadastro");
@@ -119,13 +114,14 @@ export default function Signup() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem className="text-left">
-                  <FormLabel className="font-bold text-[#607D8B]">Usuário</FormLabel>
+                  <FormLabel className="font-bold text-[#607D8B]">Email</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Escolha um nome de usuário" 
+                      type="email"
+                      placeholder="Seu endereço de email" 
                       className="w-full p-3 border rounded-md text-base"
                       {...field} 
                     />
@@ -137,14 +133,13 @@ export default function Signup() {
             
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem className="text-left">
-                  <FormLabel className="font-bold text-[#607D8B]">Email</FormLabel>
+                  <FormLabel className="font-bold text-[#607D8B]">Nome de usuário</FormLabel>
                   <FormControl>
                     <Input 
-                      type="email"
-                      placeholder="Seu endereço de email" 
+                      placeholder="Escolha um nome de usuário" 
                       className="w-full p-3 border rounded-md text-base"
                       {...field} 
                     />

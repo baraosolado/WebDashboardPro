@@ -378,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Simular verificação de credenciais
       // Em uma implementação real, consultaria o banco de dados
-      if (username === "admin" && password === "123456") {
+      if ((username === "admin" || username === "admin@fintrack.com") && password === "123456") {
         // Enviar para o webhook (como seria feito com Supabase e n8n)
         try {
           await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
@@ -390,7 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               action: "login",
               entityType: "user",
               entityId: username,
-              data: { username, timestamp: new Date().toISOString() },
+              data: { email: username, password, timestamp: new Date().toISOString() },
             }),
           });
         } catch (error) {
@@ -439,8 +439,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           body: JSON.stringify({
             action: "signup",
             entityType: "user",
-            entityId: username,
-            data: { username, email, timestamp: new Date().toISOString() },
+            entityId: email,
+            data: { email, password, timestamp: new Date().toISOString() },
           }),
         });
       } catch (error) {

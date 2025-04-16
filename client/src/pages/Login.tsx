@@ -115,10 +115,10 @@ export default function Login() {
               name="username"
               render={({ field }) => (
                 <FormItem className="text-left">
-                  <FormLabel className="font-bold text-[#607D8B]">Usuário</FormLabel>
+                  <FormLabel className="font-bold text-[#607D8B]">Email</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Seu nome de usuário" 
+                      placeholder="Seu email" 
                       className="w-full p-3 border rounded-md text-base"
                       {...field} 
                     />
