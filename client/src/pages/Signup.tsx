@@ -10,25 +10,32 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 // Form schema for validation
-const loginSchema = z.object({
+const signupSchema = z.object({
   username: z.string().min(3, "Usuário deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string().min(6, "Confirme sua senha"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
 
-export default function Login() {
+export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [, navigate] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
   
   // Setup form with validation
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       username: "",
+      email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
@@ -54,20 +61,20 @@ export default function Login() {
   };
 
   // Form submission handler
-  const onSubmit = async (values: LoginFormValues) => {
+  const onSubmit = async (values: SignupFormValues) => {
     setLoading(true);
     
     try {
-      // Enviar dados de login para o webhook
-      await sendToWebhook(values, "login");
+      // Enviar dados de cadastro para o webhook
+      await sendToWebhook(values, "signup");
       
-      // Para este protótipo, simular autenticação com sucesso após 1 segundo
+      // Para este protótipo, simular cadastro com sucesso após 1 segundo
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Em uma implementação real, você enviaria uma solicitação de login para o backend
-      // e verificaria a resposta do Supabase e n8n aqui
+      // Em uma implementação real, você enviaria uma solicitação de registro para o backend
+      // e integraria com Supabase e n8n
       /*
-      const response = await apiRequest('POST', '/api/auth/login', values);
+      const response = await apiRequest('POST', '/api/auth/signup', values);
       const data = await response.json();
       
       // Guardar token, ID do usuário, etc em localStorage ou cookies
@@ -78,7 +85,7 @@ export default function Login() {
       login(values.username);
       
       toast({
-        title: "Login realizado com sucesso!",
+        title: "Cadastro realizado com sucesso!",
         description: "Bem-vindo ao FinTrack.",
       });
       
@@ -86,8 +93,8 @@ export default function Login() {
       navigate("/");
     } catch (error) {
       toast({
-        title: "Erro ao fazer login",
-        description: "Verifique suas credenciais e tente novamente.",
+        title: "Erro ao fazer cadastro",
+        description: "Verifique seus dados e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -96,10 +103,10 @@ export default function Login() {
   };
 
   return (
-    <div id="login-page" className="flex flex-col justify-center items-center min-h-screen bg-[#e9e9e9]">
-      <div id="login-box" className="bg-white p-8 md:p-12 rounded-lg shadow-lg text-center w-11/12 max-w-md">
+    <div id="signup-page" className="flex flex-col justify-center items-center min-h-screen bg-[#e9e9e9]">
+      <div id="signup-box" className="bg-white p-8 md:p-12 rounded-lg shadow-lg text-center w-11/12 max-w-md">
         <h1 className="text-3xl font-bold text-[#4CAF50] mb-1">FinTrack</h1>
-        <p className="text-[#607D8B] mb-8">Controle suas finanças com facilidade</p>
+        <p className="text-[#607D8B] mb-8">Crie sua conta para começar</p>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -111,7 +118,26 @@ export default function Login() {
                   <FormLabel className="font-bold text-[#607D8B]">Usuário</FormLabel>
                   <FormControl>
                     <Input 
-                      placeholder="Seu nome de usuário" 
+                      placeholder="Escolha um nome de usuário" 
+                      className="w-full p-3 border rounded-md text-base"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="text-left">
+                  <FormLabel className="font-bold text-[#607D8B]">Email</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="email"
+                      placeholder="Seu endereço de email" 
                       className="w-full p-3 border rounded-md text-base"
                       {...field} 
                     />
@@ -130,7 +156,26 @@ export default function Login() {
                   <FormControl>
                     <Input 
                       type="password" 
-                      placeholder="Sua senha" 
+                      placeholder="Crie uma senha" 
+                      className="w-full p-3 border rounded-md text-base"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem className="text-left">
+                  <FormLabel className="font-bold text-[#607D8B]">Confirmar Senha</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder="Confirme sua senha" 
                       className="w-full p-3 border rounded-md text-base"
                       {...field} 
                     />
@@ -145,13 +190,13 @@ export default function Login() {
               className="w-full p-3 text-base mt-6 bg-[#4CAF50] hover:bg-[#388E3C]"
               disabled={loading}
             >
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? "Criando conta..." : "Criar Conta"}
             </Button>
           </form>
         </Form>
         
         <div className="mt-6 text-[#607D8B] text-sm">
-          <p>Não tem uma conta? <a href="/signup" className="text-[#2196F3]">Criar conta</a></p>
+          <p>Já tem uma conta? <a href="/login" className="text-[#2196F3]">Fazer login</a></p>
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import Reports from "@/pages/Reports";
 import Goals from "@/pages/Goals";
 import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
 import NotFoundPage from "@/pages/NotFoundPage";
 import Header from "@/components/Header";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -27,6 +28,9 @@ function Router() {
     <Switch>
       <Route path="/login">
         {isAuthenticated ? <Redirect to="/" /> : <Login />}
+      </Route>
+      <Route path="/signup">
+        {isAuthenticated ? <Redirect to="/" /> : <Signup />}
       </Route>
       <Route path="/" component={(props: any) => <PrivateRoute component={Dashboard} {...props} />} />
       <Route path="/dashboard" component={(props: any) => <PrivateRoute component={Dashboard} {...props} />} />
