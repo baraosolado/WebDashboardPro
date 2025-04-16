@@ -1,0 +1,1560 @@
+{
+  "name": "FinTrack - Sistema Completo",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fintrack",
+        "authenticationType": "none",
+        "responseMode": "responseNode"
+      },
+      "id": "e7d9ac15-a1c8-449f-9db8-e8c28f2241c8",
+      "name": "Webhook de Entrada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.entityType }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "user",
+              "type": "string",
+              "output": 0
+            },
+            {
+              "value2": "transaction",
+              "type": "string",
+              "output": 1
+            },
+            {
+              "value2": "category",
+              "type": "string",
+              "output": 2
+            },
+            {
+              "value2": "budget",
+              "type": "string",
+              "output": 3
+            },
+            {
+              "value2": "goal",
+              "type": "string",
+              "output": 4
+            }
+          ]
+        }
+      },
+      "id": "f1c2d3e4-a1b2-c3d4-e5f6-a7b8c9d0e1f2",
+      "name": "Tipo de Entidade",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        450,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "create",
+              "type": "string",
+              "output": 0
+            },
+            {
+              "value2": "update",
+              "type": "string",
+              "output": 1
+            },
+            {
+              "value2": "delete",
+              "type": "string",
+              "output": 2
+            },
+            {
+              "value2": "login",
+              "type": "string",
+              "output": 3
+            },
+            {
+              "value2": "signup",
+              "type": "string",
+              "output": 4
+            },
+            {
+              "value2": "addFundsToGoal",
+              "type": "string",
+              "output": 5
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-e5f6-a7b8-c9d0-e1f2a3b4c5d6",
+      "name": "Ação do Usuário",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "create",
+              "type": "string",
+              "output": 0
+            },
+            {
+              "value2": "update",
+              "type": "string",
+              "output": 1
+            },
+            {
+              "value2": "delete",
+              "type": "string",
+              "output": 2
+            }
+          ]
+        }
+      },
+      "id": "d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9",
+      "name": "Ação da Transação",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "create",
+              "type": "string",
+              "output": 0
+            },
+            {
+              "value2": "update",
+              "type": "string",
+              "output": 1
+            },
+            {
+              "value2": "delete",
+              "type": "string",
+              "output": 2
+            }
+          ]
+        }
+      },
+      "id": "b9c0d1e2-f3a4-b5c6-d7e8-f9a0b1c2d3e4",
+      "name": "Ação da Categoria",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "create",
+              "type": "string",
+              "output": 0
+            },
+            {
+              "value2": "update",
+              "type": "string",
+              "output": 1
+            },
+            {
+              "value2": "delete",
+              "type": "string",
+              "output": 2
+            }
+          ]
+        }
+      },
+      "id": "e5f6a7b8-c9d0-e1f2-a3b4-c5d6e7f8a9b0",
+      "name": "Ação do Orçamento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "dataType": "string",
+        "value1": "={{ $json.action }}",
+        "rules": {
+          "rules": [
+            {
+              "value2": "create",
+              "type": "string",
+              "output": 0
+            },
+            {
+              "value2": "update",
+              "type": "string",
+              "output": 1
+            },
+            {
+              "value2": "delete",
+              "type": "string",
+              "output": 2
+            },
+            {
+              "value2": "addFundsToGoal",
+              "type": "string",
+              "output": 3
+            }
+          ]
+        }
+      },
+      "id": "a0b1c2d3-e4f5-a6b7-c8d9-e0f1a2b3c4d5",
+      "name": "Ação da Meta",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "email",
+              "value": "={{ $json.data.email }}"
+            },
+            {
+              "name": "password",
+              "value": "={{ $json.data.password }}"
+            },
+            {
+              "name": "username",
+              "value": "={{ $json.data.username || $json.data.email.split('@')[0] }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c5d6e7f8-a9b0-c1d2-e3f4-a5b6c7d8e9f0",
+      "name": "Mapear Cadastro",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "email",
+              "value": "={{ $json.data.email }}"
+            },
+            {
+              "name": "password",
+              "value": "={{ $json.data.password }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b4c5d6e7-f8a9-b0c1-d2e3-f4a5b6c7d8e9",
+      "name": "Mapear Login",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "description",
+              "value": "={{ $json.data.description }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.data.amount }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $json.data.type }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ $json.data.date }}"
+            },
+            {
+              "name": "category_id",
+              "value": "={{ $json.data.categoryId }}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{ $json.data.userId }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f4a5b6c7-d8e9-f0a1-b2c3-d4e5f6a7b8c9",
+      "name": "Mapear Nova Transação",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "description",
+              "value": "={{ $json.data.description }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.data.amount }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $json.data.type }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ $json.data.date }}"
+            },
+            {
+              "name": "category_id",
+              "value": "={{ $json.data.categoryId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a9b0c1d2-e3f4-a5b6-c7d8-e9f0a1b2c3d4",
+      "name": "Mapear Atualização de Transação",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        330
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "name",
+              "value": "={{ $json.data.name }}"
+            },
+            {
+              "name": "color",
+              "value": "={{ $json.data.color }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $json.data.type }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3f4a5b6-c7d8-e9f0-a1b2-c3d4e5f6a7b8",
+      "name": "Mapear Nova Categoria",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "name",
+              "value": "={{ $json.data.name }}"
+            },
+            {
+              "name": "color",
+              "value": "={{ $json.data.color }}"
+            },
+            {
+              "name": "type",
+              "value": "={{ $json.data.type }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c3d4e5f6-a7b8-c9d0-e1f2-a3b4c5d6e7f8",
+      "name": "Mapear Atualização de Categoria",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "category_id",
+              "value": "={{ $json.data.categoryId }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.data.amount }}"
+            },
+            {
+              "name": "period",
+              "value": "={{ $json.data.period }}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{ $json.data.userId }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d2e3f4a5-b6c7-d8e9-f0a1-b2c3d4e5f6a7",
+      "name": "Mapear Novo Orçamento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        550
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "category_id",
+              "value": "={{ $json.data.categoryId }}"
+            },
+            {
+              "name": "amount",
+              "value": "={{ $json.data.amount }}"
+            },
+            {
+              "name": "period",
+              "value": "={{ $json.data.period }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b2c3d4e5-f6a7-b8c9-d0e1-f2a3b4c5d6e7",
+      "name": "Mapear Atualização de Orçamento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        630
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "name",
+              "value": "={{ $json.data.name }}"
+            },
+            {
+              "name": "target_amount",
+              "value": "={{ $json.data.targetAmount }}"
+            },
+            {
+              "name": "current_amount",
+              "value": "={{ $json.data.currentAmount || 0 }}"
+            },
+            {
+              "name": "target_date",
+              "value": "={{ $json.data.targetDate }}"
+            },
+            {
+              "name": "user_id",
+              "value": "={{ $json.data.userId }}"
+            },
+            {
+              "name": "created_at",
+              "value": "={{ $now }}"
+            },
+            {
+              "name": "updated_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4e5f6a7-b8c9-d0e1-f2a3-b4c5d6e7f8a9",
+      "name": "Mapear Nova Meta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "name",
+              "value": "={{ $json.data.name }}"
+            },
+            {
+              "name": "target_amount",
+              "value": "={{ $json.data.targetAmount }}"
+            },
+            {
+              "name": "target_date",
+              "value": "={{ $json.data.targetDate }}"
+            },
+            {
+              "name": "updated_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6a7b8c9-d0e1-f2a3-b4c5-d6e7-f8a9b0c1",
+      "name": "Mapear Atualização de Meta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "goal_id",
+              "value": "={{ $json.data.goalId }}"
+            },
+            {
+              "name": "current_amount",
+              "value": "={{ $json.data.currentAmount }}"
+            },
+            {
+              "name": "updated_at",
+              "value": "={{ $now }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a7b8c9d0-e1f2-a3b4-c5d6-e7f8a9b0c1d2",
+      "name": "Mapear Adição de Fundos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        850,
+        860
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "table": "users",
+        "schema": "public",
+        "valueToMatch": "={{ $json.email }}",
+        "columnToMatchOn": "email",
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "c9d0e1f2-a3b4-c5d6-e7f8-a9b0c1d2e3f4",
+      "name": "Criar Usuário (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        100
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": "users",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "email",
+              "condition": "=",
+              "value": "={{ $json.email }}"
+            },
+            {
+              "column": "password",
+              "condition": "=",
+              "value": "={{ $json.password }}"
+            }
+          ],
+          "combinator": "AND"
+        }
+      },
+      "id": "d0e1f2a3-b4c5-d6e7-f8a9-b0c1d2e3f4a5",
+      "name": "Verificar Usuário (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        180
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "transactions",
+        "schema": "public",
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "e1f2a3b4-c5d6-e7f8-a9b0-c1d2e3f4a5b6",
+      "name": "Criar Transação (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        250
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "transactions",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        },
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "f2a3b4c5-d6e7-f8a9-b0c1-d2e3f4a5b6c7",
+      "name": "Atualizar Transação (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        330
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "table": "transactions",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        }
+      },
+      "id": "a3b4c5d6-e7f8-a9b0-c1d2-e3f4a5b6c7d8",
+      "name": "Excluir Transação (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        380
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "categories",
+        "schema": "public",
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "b4c5d6e7-f8a9-b0c1-d2e3-f4a5b6c7d8e9",
+      "name": "Criar Categoria (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        420
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "categories",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        },
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "c5d6e7f8-a9b0-c1d2-e3f4-a5b6c7d8e9f0",
+      "name": "Atualizar Categoria (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        480
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "table": "categories",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        }
+      },
+      "id": "d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1",
+      "name": "Excluir Categoria (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        530
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "budgets",
+        "schema": "public",
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "e7f8a9b0-c1d2-e3f4-a5b6-c7d8e9f0a1b2",
+      "name": "Criar Orçamento (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        580
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "budgets",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        },
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "f8a9b0c1-d2e3-f4a5-b6c7-d8e9f0a1b2c3",
+      "name": "Atualizar Orçamento (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        630
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "table": "budgets",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        }
+      },
+      "id": "a9b0c1d2-e3f4-a5b6-c7d8-e9f0a1b2c3d4",
+      "name": "Excluir Orçamento (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        680
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "goals",
+        "schema": "public",
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "b0c1d2e3-f4a5-b6c7-d8e9-f0a1b2c3d4e5",
+      "name": "Criar Meta (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        730
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "goals",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        },
+        "columns": "={{ Object.entries($json).map(entry => ({column: entry[0], value: entry[1]})) }}"
+      },
+      "id": "c1d2e3f4-a5b6-c7d8-e9f0-a1b2c3d4e5f6",
+      "name": "Atualizar Meta (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        780
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "table": "goals",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.data.id }}"
+            }
+          ]
+        }
+      },
+      "id": "d2e3f4a5-b6c7-d8e9-f0a1-b2c3d4e5f6a7",
+      "name": "Excluir Meta (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        830
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "table": "goals",
+        "schema": "public",
+        "where": {
+          "conditions": [
+            {
+              "column": "id",
+              "condition": "=",
+              "value": "={{ $json.goal_id }}"
+            }
+          ]
+        },
+        "columns": [
+          {
+            "column": "current_amount",
+            "value": "={{ $json.current_amount }}"
+          },
+          {
+            "column": "updated_at",
+            "value": "={{ $json.updated_at }}"
+          }
+        ]
+      },
+      "id": "e3f4a5b6-c7d8-e9f0-a1b2-c3d4e5f6a7b8",
+      "name": "Adicionar Fundos à Meta (Supabase)",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        880
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "supabase-credentials",
+          "name": "Supabase API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Criar log da operação\nconst result = $input.item;\nconst operation = {\n  action: $input.item.json.action,\n  entityType: $input.item.json.entityType,\n  timestamp: new Date().toISOString(),\n  success: true\n};\n\n// Adicionar dados específicos se disponíveis\nif ($input.item.json.data) {\n  if ($input.item.json.data.id) {\n    operation.entityId = $input.item.json.data.id;\n  } \n  else if ($input.item.json.data.email) {\n    operation.entityId = $input.item.json.data.email;\n  }\n}\n\nreturn { json: { ...result.json, operation } };"
+      },
+      "id": "f4a5b6c7-d8e9-f0a1-b2c3-d4e5f6a7b8c9",
+      "name": "Registrar Log de Operação",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "content": "=## FinTrack - Operação Bem-Sucedida\n\n**Tipo de Entidade:** {{ $json.entityType }}\n**Ação:** {{ $json.action }}\n**Status:** Sucesso\n**Timestamp:** {{ $json.operation.timestamp }}\n\n### Detalhes\n\n```json\n{{ JSON.stringify($json.data, null, 2) }}\n```",
+        "options": {}
+      },
+      "id": "a5b6c7d8-e9f0-a1b2-c3d4-e5f6a7b8c9d0",
+      "name": "Resposta de Sucesso",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook de Entrada": {
+      "main": [
+        [
+          {
+            "node": "Tipo de Entidade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tipo de Entidade": {
+      "main": [
+        [
+          {
+            "node": "Ação do Usuário",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ação da Transação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ação da Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ação do Orçamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ação da Meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ação do Usuário": {
+      "main": [
+        [],
+        [],
+        [],
+        [
+          {
+            "node": "Mapear Login",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapear Cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ação da Transação": {
+      "main": [
+        [
+          {
+            "node": "Mapear Nova Transação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapear Atualização de Transação",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Excluir Transação (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ação da Categoria": {
+      "main": [
+        [
+          {
+            "node": "Mapear Nova Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapear Atualização de Categoria",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Excluir Categoria (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ação do Orçamento": {
+      "main": [
+        [
+          {
+            "node": "Mapear Novo Orçamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapear Atualização de Orçamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Excluir Orçamento (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ação da Meta": {
+      "main": [
+        [
+          {
+            "node": "Mapear Nova Meta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapear Atualização de Meta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Excluir Meta (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mapear Adição de Fundos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Cadastro": {
+      "main": [
+        [
+          {
+            "node": "Criar Usuário (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Login": {
+      "main": [
+        [
+          {
+            "node": "Verificar Usuário (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Nova Transação": {
+      "main": [
+        [
+          {
+            "node": "Criar Transação (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Atualização de Transação": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Transação (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Nova Categoria": {
+      "main": [
+        [
+          {
+            "node": "Criar Categoria (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Atualização de Categoria": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Categoria (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Novo Orçamento": {
+      "main": [
+        [
+          {
+            "node": "Criar Orçamento (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Atualização de Orçamento": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Orçamento (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Nova Meta": {
+      "main": [
+        [
+          {
+            "node": "Criar Meta (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Atualização de Meta": {
+      "main": [
+        [
+          {
+            "node": "Atualizar Meta (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapear Adição de Fundos": {
+      "main": [
+        [
+          {
+            "node": "Adicionar Fundos à Meta (Supabase)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Usuário (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Usuário (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Transação (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Transação (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excluir Transação (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Categoria (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Categoria (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excluir Categoria (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Orçamento (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Orçamento (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excluir Orçamento (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar Meta (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar Meta (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Excluir Meta (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Adicionar Fundos à Meta (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Registrar Log de Operação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Log de Operação": {
+      "main": [
+        [
+          {
+            "node": "Resposta de Sucesso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
