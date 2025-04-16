@@ -1,300 +1,410 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { insertTransactionSchema, TransactionWithCategory, Category } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Category } from "@shared/schema";
 
-// Extend schema with validation
-const formSchema = insertTransactionSchema.extend({
-  date: z.string().min(1, "A data é obrigatória"),
+// Schema para validação do formulário
+const transactionSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  description: z.string().min(3, "Descrição deve ter pelo menos 3 caracteres"),
+  amount: z.coerce.number().positive("Valor deve ser positivo"),
+  categoryId: z.coerce.number(),
+  date: z.string(),
+  notes: z.string().nullable().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  transaction: TransactionWithCategory | null;
+  transactionId?: number | null;
 }
 
-export default function TransactionModal({ isOpen, onClose, transaction }: TransactionModalProps) {
-  const [activeTab, setActiveTab] = useState<'expense' | 'income'>(transaction?.type || 'expense');
+export default function TransactionModal({ isOpen, onClose, transactionId }: TransactionModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   
-  // Get categories for the form
-  const { data: categories } = useQuery<Category[]>({
-    queryKey: ['/api/categories'],
-    enabled: isOpen
+  // Buscar categorias
+  const { data: categories } = useQuery({
+    queryKey: ["/api/categories"],
+    queryFn: getQueryFn({ on401: "throw" }),
   });
-  
-  // Filter categories based on active tab
-  const filteredCategories = categories?.filter(cat => cat.type === activeTab) || [];
-  
-  // Set up form with default values
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+
+  // Buscar transação se estiver editando
+  const { data: transaction, isLoading: isLoadingTransaction } = useQuery({
+    queryKey: ["/api/transactions", transactionId],
+    queryFn: transactionId ? getQueryFn({ on401: "throw" }) : () => null,
+    enabled: !!transactionId,
+  });
+
+  // Configuração do formulário
+  const form = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionSchema),
     defaultValues: {
-      description: transaction?.description || '',
-      amount: transaction?.amount ? transaction.amount.toString() : '',
-      date: transaction?.date ? new Date(transaction.date).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10),
-      type: transaction?.type || activeTab,
-      categoryId: transaction?.categoryId ? transaction.categoryId.toString() : '',
-      notes: transaction?.notes || '',
-    }
+      type: "expense",
+      description: "",
+      amount: 0,
+      categoryId: 0,
+      date: new Date().toISOString().substring(0, 10),
+      notes: "",
+    },
   });
-  
-  // Update form values when transaction changes
+
+  // Atualizar formulário quando carregar a transação
   useEffect(() => {
     if (transaction) {
-      setActiveTab(transaction.type);
+      const date = new Date(transaction.date).toISOString().substring(0, 10);
+      
       form.reset({
-        description: transaction.description,
-        amount: transaction.amount.toString(),
-        date: new Date(transaction.date).toISOString().substring(0, 10),
         type: transaction.type,
-        categoryId: transaction.categoryId.toString(),
-        notes: transaction.notes || '',
+        description: transaction.description,
+        amount: transaction.amount,
+        categoryId: transaction.categoryId,
+        date: date,
+        notes: transaction.notes || "",
       });
     } else {
       form.reset({
-        description: '',
-        amount: '',
+        type: "expense",
+        description: "",
+        amount: 0,
+        categoryId: 0,
         date: new Date().toISOString().substring(0, 10),
-        type: activeTab,
-        categoryId: '',
-        notes: '',
+        notes: "",
       });
     }
-  }, [transaction, form, activeTab]);
-  
-  // Switch tab handler
-  const handleTabChange = (value: string) => {
-    const newType = value as 'expense' | 'income';
-    setActiveTab(newType);
-    form.setValue('type', newType);
-    form.setValue('categoryId', ''); // Reset category when switching tabs
-  };
-  
-  // Create transaction mutation
+  }, [transaction, form]);
+
+  // Mutação para criar transação
   const createMutation = useMutation({
-    mutationFn: async (data: FormValues) => {
-      // Convert form values to API format
-      const payload = {
-        ...data,
-        amount: parseFloat(data.amount),
-        categoryId: parseInt(data.categoryId)
-      };
-      
-      const response = await apiRequest('POST', '/api/transactions', payload);
+    mutationFn: async (data: TransactionFormValues) => {
+      const response = await apiRequest("POST", "/api/transactions", data);
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary/categories/expense"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary/trends"] });
       toast({
-        title: "Transação criada com sucesso",
-        description: "A transação foi adicionada ao sistema.",
+        title: "Transação criada",
+        description: "A transação foi criada com sucesso.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/transactions/recent'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/summary'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/summary/categories'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/summary/trends'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
       onClose();
+      
+      // Enviar para webhook
+      sendToWebhook("create", data);
     },
     onError: (error) => {
       toast({
         title: "Erro ao criar transação",
-        description: error.message || "Não foi possível criar a transação. Tente novamente.",
-        variant: "destructive"
+        description: "Não foi possível criar a transação. Tente novamente.",
+        variant: "destructive",
       });
-    }
+      console.error("Erro ao criar transação:", error);
+    },
   });
-  
-  // Update transaction mutation
+
+  // Mutação para atualizar transação
   const updateMutation = useMutation({
-    mutationFn: async (data: FormValues) => {
-      if (!transaction) throw new Error("Transaction not found");
-      
-      // Convert form values to API format
-      const payload = {
-        ...data,
-        amount: parseFloat(data.amount),
-        categoryId: parseInt(data.categoryId)
-      };
-      
-      const response = await apiRequest('PUT', `/api/transactions/${transaction.id}`, payload);
+    mutationFn: async (data: TransactionFormValues) => {
+      const response = await apiRequest("PUT", `/api/transactions/${transactionId}`, data);
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions", transactionId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary/categories/expense"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary/trends"] });
       toast({
-        title: "Transação atualizada com sucesso",
-        description: "A transação foi atualizada no sistema.",
+        title: "Transação atualizada",
+        description: "A transação foi atualizada com sucesso.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/transactions/recent'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/summary'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/summary/categories'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/summary/trends'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
       onClose();
+      
+      // Enviar para webhook
+      sendToWebhook("update", form.getValues(), transactionId);
     },
     onError: (error) => {
       toast({
         title: "Erro ao atualizar transação",
-        description: error.message || "Não foi possível atualizar a transação. Tente novamente.",
-        variant: "destructive"
+        description: "Não foi possível atualizar a transação. Tente novamente.",
+        variant: "destructive",
       });
-    }
+      console.error("Erro ao atualizar transação:", error);
+    },
   });
-  
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  
-  // Form submission handler
-  const onSubmit = (values: FormValues) => {
-    if (transaction) {
+
+  // Mutação para excluir transação
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", `/api/transactions/${transactionId}`);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/recent"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary/categories/expense"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/summary/trends"] });
+      toast({
+        title: "Transação excluída",
+        description: "A transação foi excluída com sucesso.",
+      });
+      onClose();
+      
+      // Enviar para webhook
+      sendToWebhook("delete", form.getValues(), transactionId);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir transação",
+        description: "Não foi possível excluir a transação. Tente novamente.",
+        variant: "destructive",
+      });
+      console.error("Erro ao excluir transação:", error);
+    },
+  });
+
+  // Função para enviar dados para o webhook
+  const sendToWebhook = async (
+    action: "create" | "update" | "delete", 
+    data: any, 
+    id?: number | null
+  ) => {
+    try {
+      await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          entityType: "transaction",
+          entityId: id || "new",
+          data,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (error) {
+      console.error("Erro ao enviar para webhook:", error);
+    }
+  };
+
+  const onSubmit = (values: TransactionFormValues) => {
+    if (transactionId) {
       updateMutation.mutate(values);
     } else {
       createMutation.mutate(values);
     }
   };
-  
+
+  const handleDeleteClick = () => {
+    if (showConfirmDelete) {
+      deleteMutation.mutate();
+    } else {
+      setShowConfirmDelete(true);
+    }
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {transaction ? 'Editar Transação' : 'Nova Transação'}
+            {transactionId ? "Editar Transação" : "Nova Transação"}
           </DialogTitle>
-          <DialogDescription>
-            {transaction ? 'Altere os detalhes da transação abaixo.' : 'Preencha os detalhes da nova transação.'}
-          </DialogDescription>
         </DialogHeader>
-        
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="mt-2">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="expense">Despesa</TabsTrigger>
-            <TabsTrigger value="income">Receita</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Supermercado, Aluguel..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor (R$)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      step="0.01" 
-                      placeholder="0,00" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria</FormLabel>
-                  <Select 
-                    value={field.value} 
-                    onValueChange={field.onChange}
-                  >
+
+        {isLoadingTransaction && transactionId ? (
+          <div className="flex justify-center p-6">Carregando transação...</div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="expense">Despesa</SelectItem>
+                        <SelectItem value="income">Receita</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
+                      <Input placeholder="Ex: Supermercado" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      {filteredCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Observações</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Notas adicionais (opcional)" 
-                      className="resize-none" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={onClose} disabled={isPending}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {transaction ? 'Atualizar' : 'Salvar'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Valor</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="0.00" 
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e.target.valueAsNumber);
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="categoryId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Categoria</FormLabel>
+                    <Select
+                      onValueChange={(value) => field.onChange(parseInt(value))}
+                      value={field.value?.toString()}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma categoria" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {categories?.map((category: Category) => (
+                          <SelectItem 
+                            key={category.id} 
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Adicione detalhes adicionais (opcional)" 
+                        {...field} 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                {transactionId && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleDeleteClick}
+                    disabled={isPending}
+                  >
+                    {showConfirmDelete ? "Confirmar Exclusão" : "Excluir"}
+                  </Button>
+                )}
+                <div className="flex gap-2 ml-auto">
+                  <Button type="button" variant="outline" onClick={onClose}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isPending}>
+                    {isPending ? "Salvando..." : transactionId ? "Atualizar" : "Criar"}
+                  </Button>
+                </div>
+              </DialogFooter>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

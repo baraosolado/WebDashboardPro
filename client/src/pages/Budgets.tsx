@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getQueryFn } from "@/lib/queryClient";
 import { BudgetWithCategory } from "@shared/schema";
+import BudgetModal from "@/components/BudgetModal";
 
 export default function Budgets() {
   const [month, setMonth] = useState(
     new Date().toISOString().slice(0, 7)
   ); // Formato YYYY-MM
+  
+  // Estados para controlar o modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBudgetId, setSelectedBudgetId] = useState<number | null>(null);
 
   // Buscar orçamentos
   const { data: budgets, isLoading } = useQuery({
@@ -30,6 +35,28 @@ export default function Budgets() {
     const date = new Date(parseInt(year), parseInt(month) - 1);
     return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   };
+  
+  // Funções para gerenciar o modal
+  const openNewBudgetModal = () => {
+    setSelectedBudgetId(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditBudgetModal = (budgetId: number) => {
+    setSelectedBudgetId(budgetId);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedBudgetId(null);
+  };
+  
+  // Função para ver orçamento do mês selecionado
+  const viewBudgetForMonth = () => {
+    // Aqui você pode implementar um filtro por mês para os orçamentos
+    // No momento, estamos apenas mostrando todos os orçamentos
+  };
 
   return (
     <main className="max-w-7xl mx-auto p-4 pt-20">
@@ -49,7 +76,13 @@ export default function Budgets() {
               />
             </div>
             <div>
-              <Button variant="default" className="w-full md:w-auto">Ver Orçamento</Button>
+              <Button 
+                variant="default" 
+                className="w-full md:w-auto"
+                onClick={viewBudgetForMonth}
+              >
+                Ver Orçamento
+              </Button>
             </div>
           </div>
         </div>
@@ -60,7 +93,12 @@ export default function Budgets() {
             <h2 className="text-lg font-semibold text-gray-700">
               Orçamentos para {formatMonth(month)}
             </h2>
-            <Button variant="default">+ Novo Orçamento</Button>
+            <Button 
+              variant="default"
+              onClick={openNewBudgetModal}
+            >
+              + Novo Orçamento
+            </Button>
           </div>
 
           {isLoading ? (
@@ -96,8 +134,22 @@ export default function Budgets() {
                       </div>
                       
                       <div className="flex justify-end gap-2 mt-2">
-                        <Button variant="outline" size="sm" className="h-8 text-xs">Editar</Button>
-                        <Button variant="destructive" size="sm" className="h-8 text-xs">Excluir</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs"
+                          onClick={() => openEditBudgetModal(budget.id)}
+                        >
+                          Editar
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          className="h-8 text-xs"
+                          onClick={() => openEditBudgetModal(budget.id)}
+                        >
+                          Excluir
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -107,6 +159,13 @@ export default function Budgets() {
           )}
         </div>
       </div>
+      
+      {/* Modal de Orçamento */}
+      <BudgetModal 
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        budgetId={selectedBudgetId}
+      />
     </main>
   );
 }

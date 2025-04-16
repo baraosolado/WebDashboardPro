@@ -11,13 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getQueryFn } from "@/lib/queryClient";
-import { Category, Transaction, TransactionWithCategory } from "@shared/schema";
+import { Category, TransactionWithCategory } from "@shared/schema";
+import TransactionModal from "@/components/TransactionModal";
 
 export default function Transactions() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [type, setType] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [type, setType] = useState("all");
+  const [categoryId, setCategoryId] = useState("all");
+  
+  // Estados para controlar o modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null);
 
   // Buscar todas as transações
   const { data: transactions, isLoading } = useQuery({
@@ -35,12 +40,34 @@ export default function Transactions() {
   const clearFilters = () => {
     setStartDate("");
     setEndDate("");
-    setType("");
-    setCategoryId("");
+    setType("all");
+    setCategoryId("all");
   };
 
-  // Filtro de transações (simulado - em uma implementação real, enviaria ao backend)
+  // Funções para gerenciar o modal
+  const openNewTransactionModal = () => {
+    setSelectedTransactionId(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditTransactionModal = (transactionId: number) => {
+    setSelectedTransactionId(transactionId);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedTransactionId(null);
+  };
+  
+  // Filtro de transações
   const filteredTransactions = transactions || [];
+  
+  // Função para aplicar filtros (no momento é simulada)
+  const applyFilters = () => {
+    // Os filtros já são aplicados automaticamente
+    // Esta é apenas uma função para ação do botão
+  };
 
   return (
     <main className="max-w-7xl mx-auto p-4 pt-20">
@@ -99,7 +126,7 @@ export default function Transactions() {
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={clearFilters}>Limpar</Button>
-            <Button variant="default">Filtrar</Button>
+            <Button variant="default" onClick={applyFilters}>Filtrar</Button>
           </div>
         </div>
 
@@ -107,7 +134,7 @@ export default function Transactions() {
         <div className="bg-white rounded-lg shadow">
           <div className="flex justify-between items-center p-4 border-b">
             <h2 className="text-lg font-semibold text-gray-700">Histórico Completo</h2>
-            <Button variant="default">+ Nova Transação</Button>
+            <Button variant="default" onClick={openNewTransactionModal}>+ Nova Transação</Button>
           </div>
           
           <div className="overflow-x-auto">
@@ -143,8 +170,22 @@ export default function Transactions() {
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex justify-center gap-2">
-                          <Button variant="warning" size="sm" className="h-8 text-xs">Editar</Button>
-                          <Button variant="destructive" size="sm" className="h-8 text-xs">Excluir</Button>
+                          <Button 
+                            variant="warning" 
+                            size="sm" 
+                            className="h-8 text-xs"
+                            onClick={() => openEditTransactionModal(transaction.id)}
+                          >
+                            Editar
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="h-8 text-xs"
+                            onClick={() => openEditTransactionModal(transaction.id)}
+                          >
+                            Excluir
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -155,6 +196,13 @@ export default function Transactions() {
           </div>
         </div>
       </div>
+      
+      {/* Modal de Transação */}
+      <TransactionModal 
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        transactionId={selectedTransactionId}
+      />
     </main>
   );
 }
