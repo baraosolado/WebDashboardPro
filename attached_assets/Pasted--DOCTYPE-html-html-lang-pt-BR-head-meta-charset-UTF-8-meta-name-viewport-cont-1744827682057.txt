@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack - App de Finanças Pessoais</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --tertiary-color: #607D8B;
+            --light-bg: #f5f5f5;
+            --dark-text: #333;
+            --light-text: #fff;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --success: #4CAF50;
+            --info: #2196F3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            /* padding-top: 60px; Removido - Será controlado pelo JS após login */
+        }
+
+        /* --- Estilos para Login --- */
+        #login-page {
+            display: flex; /* Mostra por padrão */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #e9e9e9; /* Fundo ligeiramente diferente */
+        }
+
+        #login-box {
+            background-color: white;
+            padding: 2rem 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        #login-box h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        #login-box p {
+            color: var(--tertiary-color);
+            margin-bottom: 2rem;
+        }
+        #login-box .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        #login-box label {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--tertiary-color);
+        }
+        #login-box input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        #login-box .btn {
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Esconder conteúdo principal inicialmente */
+        header, main, .fab {
+            display: none;
+        }
+        /* Mostrar conteúdo principal quando o body tiver a classe 'logged-in' */
+        body.logged-in header,
+        body.logged-in main,
+        body.logged-in .fab {
+            display: flex; /* ou block/grid conforme o elemento */
+        }
+        body.logged-in header { display: flex; }
+        body.logged-in main { display: block; }
+        body.logged-in .fab { display: flex; }
+
+        /* --- Estilos Gerais (mantidos e ajustados) --- */
+
+        body.logged-in {
+            padding-top: 60px; /* Adiciona padding de volta após login */
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 0.8rem 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 1rem;
+        }
+
+        nav ul li a {
+            color: var(--light-text);
+            text-decoration: none;
+            padding: 0.5rem;
+            display: block;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        nav ul li a:hover,
+        nav ul li a.active {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        main {
+            /* padding: 1rem; Removido - já está no body/section */
+            max-width: 1200px;
+            margin: 1rem auto;
+        }
+
+        .page-section {
+            display: none; /* Esconde todas as seções por padrão */
+            padding: 1rem; /* Adiciona padding interno à seção */
+        }
+        .page-section.active {
+            display: block; /* Mostra apenas a seção ativa */
+        }
+
+        .dashboard, .page-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .card-full-width {
+             grid-column: 1 / -1;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+            flex-wrap: wrap; /* Permite quebra de linha em telas menores */
+            gap: 0.5rem; /* Espaçamento entre título e botão/filtro */
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--tertiary-color);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .summary-card.income { border-top: 4px solid var(--success); }
+        .summary-card.expense { border-top: 4px solid var(--danger); }
+        .summary-card.balance { border-top: 4px solid var(--info); }
+
+        .summary-amount {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .income .summary-amount { color: var(--success); }
+        .expense .summary-amount { color: var(--danger); }
+        .balance .summary-amount { color: var(--info); }
+
+        .transaction-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem; /* Espaço acima da tabela */
+        }
+
+        .transaction-list th, .transaction-list td {
+            text-align: left;
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle; /* Alinha verticalmente */
+        }
+
+        .transaction-list th {
+            background-color: #f9f9f9;
+            color: var(--tertiary-color);
+            font-size: 0.9rem;
+        }
+        .transaction-list td {
+             font-size: 0.95rem;
+        }
+
+        .transaction-list tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+         .transaction-list td.income { color: var(--success); font-weight: bold;}
+         .transaction-list td.expense { color: var(--danger); font-weight: bold;}
+         .transaction-list .action-buttons button { margin-left: 5px;} /* Espaço botões de ação */
+
+        .category-tag {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: white;
+            white-space: nowrap;
+        }
+        .category-food { background-color: #FF9800; }
+        .category-housing { background-color: #9C27B0; }
+        .category-transport { background-color: #03A9F4; }
+        .category-health { background-color: #E91E63; }
+        .category-leisure { background-color: #8BC34A; }
+        .category-education { background-color: #3F51B5; }
+        .category-other { background-color: #795548; }
+        .category-salary { background-color: #4CAF50; }
+        .category-investment { background-color: #FFC107; }
+        .category-gift { background-color: #00BCD4; }
+
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+            text-align: center;
+            text-decoration: none;
+            font-size: 0.9rem;
+            line-height: 1.2; /* Melhora alinhamento vertical */
+            white-space: nowrap; /* Evita quebra de linha */
+        }
+        .btn-sm { /* Botão menor para ações em tabelas/listas */
+             padding: 0.3rem 0.6rem;
+             font-size: 0.8rem;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #388E3C; }
+        .btn-secondary { background-color: var(--secondary-color); color: white; }
+        .btn-secondary:hover { background-color: #1976D2; }
+        .btn-danger { background-color: var(--danger); color: white; }
+        .btn-danger:hover { background-color: #D32F2F; }
+        .btn-warning { background-color: var(--warning); color: white; }
+        .btn-warning:hover { background-color: #F57C00; }
+        .btn-info { background-color: var(--info); color: white; }
+        .btn-info:hover { background-color: #1976D2; } /* Igual secondary hover */
+        .btn-light { background-color: #f0f0f0; color: var(--dark-text); border: 1px solid #ddd;}
+        .btn-light:hover { background-color: #e0e0e0; }
+
+
+        .fab {
+            /* Estilos FAB mantidos */
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex; /* Ajustado via JS/Body class */
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 99;
+            text-decoration: none;
+        }
+         .fab:hover { background-color: #388E3C; }
+
+        .budget-progress, .goal-progress {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .budget-header, .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline; /* Alinha melhor texto e valor */
+            margin-bottom: 0.3rem;
+            font-size: 0.95rem;
+            flex-wrap: wrap; /* Quebra linha se necessário */
+        }
+         .goal-header small { color: var(--tertiary-color); font-size: 0.85em; margin-left: 0.5rem;}
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.2rem;
+        }
+
+        .progress-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease-in-out;}
+        .progress-safe { background-color: var(--success); }
+        .progress-warning { background-color: var(--warning); }
+        .progress-danger { background-color: var(--danger); }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+            margin-top: 1rem; /* Espaço acima do gráfico */
+        }
+
+        .modal {
+            display: none; /* Controlado por JS */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+        .modal.active { /* Classe para mostrar o modal */
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            margin: 2rem auto; /* Margem vertical e centraliza horizontalmente */
+            position: relative; /* Para posicionar o botão fechar */
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem; /* Aumentado espaço */
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+         .modal-header h2 { font-size: 1.4rem; color: var(--tertiary-color)}
+
+        .close-modal {
+            position: absolute; /* Posiciona relativo ao modal-content */
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.8rem; /* Maior */
+            line-height: 1;
+            cursor: pointer;
+            color: #aaa;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .close-modal:hover { color: #777; }
+
+        .form-group { margin-bottom: 1rem; }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--tertiary-color);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        input[type="month"], /* Adicionado para filtros de mês */
+        input[type="email"],
+        input[type="password"], /* Adicionado para login/settings */
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #fff; /* Garante fundo branco */
+        }
+         input:focus, select:focus, textarea:focus {
+             border-color: var(--primary-color);
+             outline: none;
+             box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+         }
+         input[type="file"] { padding: 0.5rem; }
+         textarea { min-height: 80px; resize: vertical; }
+
+        .tabs { /* Estilos Tabs mantidos */ }
+        .tab { /* Estilos Tab mantidos */ }
+        .tab.active { /* Estilos Tab Ativa mantidos */ }
+
+        /* --- Estilos Filtros --- */
+        .filters {
+             background-color: #f9f9f9;
+             padding: 1rem 1.5rem; /* Mais padding */
+             border-radius: 8px;
+             margin-bottom: 1.5rem;
+             border: 1px solid #eee;
+             display: flex; /* Flexbox para alinhar itens */
+             flex-wrap: wrap; /* Quebra linha */
+             gap: 1rem; /* Espaçamento entre grupos de filtros */
+             align-items: flex-end; /* Alinha itens na base */
+        }
+         .filters .form-group {
+             /* Não precisa mais de inline-block, flex cuida disso */
+             margin-bottom: 0; /* Remove margem inferior padrão */
+             flex-grow: 1; /* Permite que campos cresçam */
+             min-width: 150px; /* Largura mínima */
+         }
+         .filters label {
+             font-size: 0.85rem;
+             margin-bottom: 0.3rem; /* Menos espaço */
+         }
+         .filters .filter-buttons {
+             margin-left: auto; /* Empurra botões para direita se houver espaço */
+             padding-bottom: 0; /* Alinha com a base dos inputs */
+             display: flex;
+             gap: 0.5rem; /* Espaço entre botões */
+         }
+         .filters .btn {
+             padding: 0.6rem 1rem; /* Ajuste padding */
+             /* margin-top: 0; Não precisa mais */
+         }
+
+         /* --- Estilos Settings --- */
+         .settings-section {
+             background-color: #fff; /* Fundo branco para destaque */
+             padding: 1.5rem;
+             border-radius: 8px;
+             margin-bottom: 1.5rem;
+             border: 1px solid #eee;
+             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+         }
+         .settings-section h3 {
+             color: var(--primary-color);
+             margin-bottom: 1rem;
+             border-bottom: 1px solid #eee;
+             padding-bottom: 0.5rem;
+             font-size: 1.15rem;
+         }
+         .settings-section .form-group {
+             width: 100%;
+             margin-right: 0;
+             margin-bottom: 1.2rem; /* Mais espaço */
+         }
+
+         /* Gerenciamento de Categorias */
+         .category-management ul {
+             list-style: none;
+             padding: 0;
+             margin-top: 1rem; /* Espaço acima da lista */
+             max-height: 300px; /* Limita altura e adiciona scroll */
+             overflow-y: auto;
+             border: 1px solid #eee;
+             border-radius: 4px;
+         }
+         .category-management li {
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+             padding: 0.6rem 1rem; /* Mais padding vertical */
+             border-bottom: 1px solid #eee;
+         }
+         .category-management li:last-child {
+             border-bottom: none; /* Remove borda do último item */
+         }
+         .category-management li span {
+             flex-grow: 1;
+             margin-right: 1rem;
+             color: var(--dark-text);
+         }
+         .category-management .btn {
+             padding: 0.2rem 0.5rem;
+             font-size: 0.8rem;
+         }
+         .add-category-form {
+             display: flex;
+             gap: 0.5rem;
+             margin-top: 1rem;
+             align-items: center;
+         }
+         .add-category-form input {
+             flex-grow: 1;
+         }
+         .add-category-form .btn {
+             flex-shrink: 0; /* Não encolhe o botão */
+         }
+
+        @media (max-width: 768px) {
+            .dashboard, .page-content {
+                grid-template-columns: 1fr;
+            }
+            nav ul { display: none; }
+            /* Adicionar botão de menu hambúrguer aqui se necessário */
+            .fab { bottom: 1rem; right: 1rem; }
+            .filters { flex-direction: column; align-items: stretch; }
+            .filters .form-group { width: 100%; min-width: unset; }
+            .filters .filter-buttons { width: 100%; margin-left: 0; justify-content: flex-start; margin-top: 0.5rem;}
+            .modal-content { width: 95%; padding: 1.5rem;}
+            .modal-header h2 { font-size: 1.2rem;}
+            #login-box { padding: 1.5rem; }
+        }
+        @media (max-width: 480px) {
+            .card-header { flex-direction: column; align-items: flex-start;}
+            .transaction-list th, .transaction-list td { padding: 0.5rem;}
+            .transaction-list .action-buttons { display: flex; flex-direction: column; gap: 4px; align-items: flex-start;}
+            .transaction-list .action-buttons button { width: 100%; text-align: center;} /* Opcional: Botões ocupam largura */
+        }
+
+    </style>
+</head>
+<body>
+
+    <section id="login-page">
+        <div id="login-box">
+            <h1>FinTrack</h1>
+            <p>Seu gerenciador financeiro pessoal.</p>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Senha</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+                <p id="login-error" style="color: var(--danger); margin-top: 1rem; display: none;">Usuário ou senha inválidos.</p>
+                 </form>
+        </div>
+    </section>
+
+    <header>
+        <div class="logo">FinTrack</div>
+        <nav id="main-nav">
+             <ul>
+                 <li><a href="#" data-page="dashboard-page" class="active">Dashboard</a></li>
+                 <li><a href="#" data-page="transactions-page">Transações</a></li>
+                 <li><a href="#" data-page="budgets-page">Orçamentos</a></li>
+                 <li><a href="#" data-page="reports-page">Relatórios</a></li>
+                 <li><a href="#" data-page="goals-page">Metas</a></li>
+                 <li><a href="#" data-page="settings-page">Configurações</a></li>
+                 <li><a href="#" id="logout-button">Sair</a></li> </ul>
+        </nav>
+         </header>
+
+    <main>
+        <section id="dashboard-page" class="page-section">
+            <div class="card-header" style="border: none; padding-bottom: 0; margin-bottom: 0.5rem;"> <h1 style="margin-bottom: 0;">Dashboard Financeiro</h1>
+                 <div class="form-group" style="margin-bottom: 0;">
+                     <label for="dashboard-month-filter" style="display: none;">Mês</label> <select id="dashboard-month-filter" class="btn" style="padding-right: 2rem; appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right .7em top 50%; background-size: .65em auto;">
+                         <option value="2025-04">Abril 2025</option>
+                         <option value="2025-03">Março 2025</option>
+                         <option value="2025-02">Fevereiro 2025</option>
+                         <option value="2025-01">Janeiro 2025</option>
+                         <option value="2024-12">Dezembro 2024</option>
+                         </select>
+                 </div>
+            </div>
+            <p id="dashboard-month-display" style="margin-bottom: 1.5rem; color: var(--tertiary-color);">Visão geral para Abril 2025</p>
+
+            <div class="summary-cards"> ... </div>
+             <div class="dashboard"> ... </div>
+             <div class="dashboard"> ... </div>
+
+        </section>
+
+        <section id="transactions-page" class="page-section">
+            <h1>Transações</h1>
+            <p>Visualize e gerencie suas receitas e despesas.</p>
+
+            <div class="filters card card-full-width">
+                 <form id="filter-form" style="display: contents;"> <div class="form-group">
+                         <label for="filter-start-date">Data Início</label>
+                         <input type="date" id="filter-start-date">
+                     </div>
+                     <div class="form-group">
+                         <label for="filter-end-date">Data Fim</label>
+                         <input type="date" id="filter-end-date">
+                     </div>
+                     <div class="form-group">
+                         <label for="filter-type">Tipo</label>
+                         <select id="filter-type">
+                             <option value="">Todos</option>
+                             <option value="income">Receita</option>
+                             <option value="expense">Despesa</option>
+                         </select>
+                     </div>
+                     <div class="form-group">
+                         <label for="filter-category">Categoria</label>
+                         <select id="filter-category">
+                             <option value="">Todas</option>
+                             </select>
+                     </div>
+                     <div class="filter-buttons">
+                         <button type="button" id="filter-transactions-btn" class="btn btn-info">Filtrar</button>
+                         <button type="button" id="clear-filter-btn" class="btn btn-light">Limpar</button>
+                     </div>
+                 </form>
+            </div>
+
+            <div class="card card-full-width">
+                <div class="card-header">
+                    <div class="card-title">Histórico Completo</div>
+                    <button class="btn btn-primary" onclick="showModal('transaction-modal')">+ Nova Transação</button>
+                </div>
+                <div style="overflow-x: auto;"> <table class="transaction-list">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th style="text-align: right;">Valor</th> <th style="text-align: center;">Ações</th> </tr>
+                        </thead>
+                        <tbody id="transactions-table-body">
+                            <tr>
+                                <td>15/04/2025</td>
+                                <td>Supermercado Extra</td>
+                                <td><span class="category-tag category-food">Alimentação</span></td>
+                                <td class="expense" style="text-align: right;">- R$ 250,00</td>
+                                <td class="action-buttons" style="text-align: center;">
+                                    <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="1">Editar</button>
+                                    <button class="btn btn-danger btn-sm delete-transaction-btn" data-id="1">Excluir</button>
+                                </td>
+                            </tr>
+                             <tr>
+                                <td>05/04/2025</td>
+                                <td>Salário Empresa XYZ</td>
+                                <td><span class="category-tag category-salary">Salário</span></td>
+                                <td class="income" style="text-align: right;">+ R$ 5.000,00</td>
+                                <td class="action-buttons" style="text-align: center;">
+                                    <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="2">Editar</button>
+                                    <button class="btn btn-danger btn-sm delete-transaction-btn" data-id="2">Excluir</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                    </table>
+                 </div>
+            </div>
+        </section>
+
+        <section id="budgets-page" class="page-section">
+             <h1>Orçamentos</h1>
+             <p>Defina e acompanhe seus limites de gastos por categoria.</p>
+
+             <div class="filters card card-full-width">
+                <form id="budget-filter-form" style="display: contents;">
+                    <div class="form-group">
+                        <label for="budget-filter-month">Mês/Ano</label>
+                        <input type="month" id="budget-filter-month" value="2025-04">
+                    </div>
+                    <div class="filter-buttons">
+                         <button type="button" id="view-budget-btn" class="btn btn-info">Ver Orçamento</button>
+                    </div>
+                </form>
+             </div>
+
+            <div class="card card-full-width">
+                <div class="card-header">
+                    <div id="budget-list-title" class="card-title">Orçamentos para Abril 2025</div>
+                    <button class="btn btn-primary" onclick="showModal('budget-modal')">+ Novo Orçamento</button>
+                </div>
+
+                <div id="budgets-list-container" class="page-content">
+                    <div class="card">
+                        <div class="budget-progress">
+                            <div class="budget-header">
+                                <span><span class="category-tag category-food">Alimentação</span></span>
+                                <span>R$ 600,00 / R$ 800,00</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-safe" style="width: 75%"></div>
+                            </div>
+                             <div class="action-buttons" style="text-align: right; margin-top: 0.5rem;">
+                                 <button class="btn btn-warning btn-sm edit-budget-btn" data-id="b1">Editar</button>
+                                 <button class="btn btn-danger btn-sm delete-budget-btn" data-id="b1">Excluir</button>
+                             </div>
+                        </div>
+                    </div>
+                     <div class="card">
+                        <div class="budget-progress">
+                            <div class="budget-header">
+                                <span><span class="category-tag category-transport">Transporte</span></span>
+                                <span>R$ 180,00 / R$ 300,00</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-safe" style="width: 60%"></div>
+                            </div>
+                             <div class="action-buttons" style="text-align: right; margin-top: 0.5rem;">
+                                 <button class="btn btn-warning btn-sm edit-budget-btn" data-id="b2">Editar</button>
+                                 <button class="btn btn-danger btn-sm delete-budget-btn" data-id="b2">Excluir</button>
+                             </div>
+                        </div>
+                    </div>
+                    </div>
+             </div>
+        </section>
+
+        <section id="reports-page" class="page-section">
+            <h1>Relatórios</h1>
+            <p>Analise suas finanças com mais detalhes.</p>
+
+             <div class="card card-full-width">
+                 <div class="card-header">
+                     <div class="card-title">Gerar Relatório Financeiro</div>
+                 </div>
+                 <div style="padding: 1rem 0;"> <button id="generate-report-btn" class="btn btn-primary">Gerar Relatório</button>
+                 </div>
+                 <div id="report-output-area" style="margin-top: 1.5rem;">
+                     </div>
+             </div>
+        </section>
+
+        <section id="goals-page" class="page-section">
+             <h1>Metas Financeiras</h1>
+             <p>Defina e acompanhe seus objetivos de economia.</p>
+
+             <div class="card card-full-width">
+                <div class="card-header">
+                    <div class="card-title">Minhas Metas</div>
+                    <button class="btn btn-primary" onclick="showModal('goal-modal')">+ Nova Meta</button>
+                </div>
+
+                <div id="goals-list-container" class="page-content">
+                    <div class="card">
+                        <div class="goal-progress">
+                            <div class="goal-header">
+                                <span>Viagem Férias</span>
+                                <small>Meta: R$ 5.000,00</small>
+                            </div>
+                            <span>R$ 2.500,00 (50%)</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-safe" style="width: 50%"></div>
+                            </div>
+                             <small>Prazo: Dezembro/2025</small>
+                             <div class="action-buttons" style="text-align: right; margin-top: 0.5rem;">
+                                 <button class="btn btn-success btn-sm add-goal-value-btn" data-id="g1">Adicionar Valor</button>
+                                 <button class="btn btn-warning btn-sm edit-goal-btn" data-id="g1">Editar</button>
+                                 <button class="btn btn-danger btn-sm delete-goal-btn" data-id="g1">Excluir</button>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="goal-progress">
+                             <div class="goal-header">
+                                <span>Notebook Novo</span>
+                                <small>Meta: R$ 4.000,00</small>
+                            </div>
+                            <span>R$ 3.800,00 (95%)</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill progress-warning" style="width: 95%"></div>
+                            </div>
+                             <small>Prazo: Maio/2025</small>
+                             <div class="action-buttons" style="text-align: right; margin-top: 0.5rem;">
+                                 <button class="btn btn-success btn-sm add-goal-value-btn" data-id="g2">Adicionar Valor</button>
+                                 <button class="btn btn-warning btn-sm edit-goal-btn" data-id="g2">Editar</button>
+                                 <button class="btn btn-danger btn-sm delete-goal-btn" data-id="g2">Excluir</button>
+                             </div>
+                        </div>
+                    </div>
+                    </div>
+             </div>
+        </section>
+
+        <section id="settings-page" class="page-section">
+            <h1>Configurações</h1>
+            <p>Gerencie suas preferências e categorias.</p>
+
+            <div class="settings-section">
+                <h3>Perfil do Usuário</h3>
+                <form id="user-profile-form">
+                    <div class="form-group">
+                        <label for="profile-name">Nome</label>
+                        <input type="text" id="profile-name" value="Usuário Exemplo">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-email">Email</label>
+                        <input type="email" id="profile-email" value="usuario@exemplo.com" readonly> </div>
+                     <div class="form-group">
+                        <label for="profile-password">Nova Senha (deixe em branco para não alterar)</label>
+                        <input type="password" id="profile-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                </form>
+            </div>
+
+            <div class="settings-section category-management">
+                <h3>Gerenciar Categorias</h3>
+                 <div class="add-category-form">
+                     <input type="text" id="new-category-name" placeholder="Nome da nova categoria">
+                     <button id="add-category-btn" class="btn btn-primary btn-sm">Adicionar</button>
+                 </div>
+                 <ul id="category-list">
+                     <li>
+                         <span>Alimentação</span>
+                         <button class="btn btn-danger btn-sm delete-category-btn" data-id="cat1">Excluir</button>
+                     </li>
+                      <li>
+                         <span>Moradia</span>
+                         <button class="btn btn-danger btn-sm delete-category-btn" data-id="cat2">Excluir</button>
+                     </li>
+                      <li>
+                         <span>Transporte</span>
+                         <button class="btn btn-danger btn-sm delete-category-btn" data-id="cat3">Excluir</button>
+                     </li>
+                     </ul>
+            </div>
+
+             <div class="settings-section">
+                <h3>Outras Configurações</h3>
+                 <p>Opções como moeda padrão, notificações, etc., podem ser adicionadas aqui.</p>
+            </div>
+
+        </section>
+    </main>
+
+    <a href="#" class="fab" onclick="showModal('transaction-modal'); return false;">+</a> <div id="generic-modal" class="modal">
+        <div class="modal-content">
+             <button class="close-modal" onclick="hideModal('generic-modal')">&times;</button>
+            <div class="modal-header">
+                <h2 id="generic-modal-title">Título do Modal</h2>
+            </div>
+            <div id="generic-modal-body">
+                <p>Conteúdo do modal aqui...</p>
+            </div>
+             <div class="modal-footer" style="text-align: right; margin-top: 1.5rem;">
+                 <button class="btn btn-light" onclick="hideModal('generic-modal')">Cancelar</button>
+                 <button id="generic-modal-confirm-btn" class="btn btn-primary">Confirmar</button>
+             </div>
+        </div>
+    </div>
+
+    <div id="transaction-modal" class="modal">
+         <div class="modal-content">
+            <button class="close-modal" onclick="hideModal('transaction-modal')">&times;</button>
+            <div class="modal-header">
+                <h2 id="transaction-modal-title">Nova Transação</h2>
+            </div>
+            <form id="transaction-form">
+                <input type="hidden" id="transaction-id"> <div class="form-group">
+                    <label for="transaction-type">Tipo</label>
+                    <select id="transaction-type" required>
+                        <option value="expense">Despesa</option>
+                        <option value="income">Receita</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-description">Descrição</label>
+                    <input type="text" id="transaction-description" required>
+                </div>
+                <div class="form-group">
+                    <label for="transaction-amount">Valor</label>
+                    <input type="number" id="transaction-amount" step="0.01" required placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="transaction-date">Data</label>
+                    <input type="date" id="transaction-date" required>
+                </div>
+                 <div class="form-group">
+                    <label for="transaction-category">Categoria</label>
+                    <select id="transaction-category" required>
+                         <option value="">Selecione...</option>
+                         <option value="food">Alimentação</option>
+                         <option value="salary">Salário</option>
+                         </select>
+                </div>
+                 <div class="form-group">
+                    <label for="transaction-notes">Observações (Opcional)</label>
+                    <textarea id="transaction-notes"></textarea>
+                </div>
+                 <div style="text-align: right; margin-top: 1.5rem;">
+                     <button type="button" class="btn btn-light" onclick="hideModal('transaction-modal')">Cancelar</button>
+                     <button type="submit" id="save-transaction-btn" class="btn btn-primary">Salvar</button>
+                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="budget-modal" class="modal">
+         <div class="modal-content">
+             <button class="close-modal" onclick="hideModal('budget-modal')">&times;</button>
+             <div class="modal-header">
+                <h2 id="budget-modal-title">Novo Orçamento</h2>
+            </div>
+            <form id="budget-form">
+                 <input type="hidden" id="budget-id">
+                 <div class="form-group">
+                     <label for="budget-category">Categoria</label>
+                     <select id="budget-category" required>
+                         <option value="">Selecione...</option>
+                         <option value="food">Alimentação</option>
+                         </select>
+                 </div>
+                 <div class="form-group">
+                     <label for="budget-amount">Valor Orçado</label>
+                     <input type="number" id="budget-amount" step="0.01" required placeholder="0.00">
+                 </div>
+                 <div class="form-group">
+                     <label for="budget-month">Mês/Ano</label>
+                     <input type="month" id="budget-month" required>
+                 </div>
+                  <div style="text-align: right; margin-top: 1.5rem;">
+                     <button type="button" class="btn btn-light" onclick="hideModal('budget-modal')">Cancelar</button>
+                     <button type="submit" id="save-budget-btn" class="btn btn-primary">Salvar</button>
+                 </div>
+            </form>
+         </div>
+    </div>
+
+    <div id="goal-modal" class="modal">
+         <div class="modal-content">
+             <button class="close-modal" onclick="hideModal('goal-modal')">&times;</button>
+             <div class="modal-header">
+                <h2 id="goal-modal-title">Nova Meta</h2>
+            </div>
+            <form id="goal-form">
+                 <input type="hidden" id="goal-id">
+                 <div class="form-group">
+                     <label for="goal-name">Nome da Meta</label>
+                     <input type="text" id="goal-name" required>
+                 </div>
+                 <div class="form-group">
+                     <label for="goal-target-amount">Valor Alvo</label>
+                     <input type="number" id="goal-target-amount" step="0.01" required placeholder="0.00">
+                 </div>
+                  <div class="form-group">
+                     <label for="goal-current-amount">Valor Inicial (Opcional)</label>
+                     <input type="number" id="goal-current-amount" step="0.01" placeholder="0.00">
+                 </div>
+                 <div class="form-group">
+                     <label for="goal-deadline">Prazo (Opcional)</label>
+                     <input type="date" id="goal-deadline">
+                 </div>
+                  <div style="text-align: right; margin-top: 1.5rem;">
+                     <button type="button" class="btn btn-light" onclick="hideModal('goal-modal')">Cancelar</button>
+                     <button type="submit" id="save-goal-btn" class="btn btn-primary">Salvar Meta</button>
+                 </div>
+            </form>
+         </div>
+    </div>
+
+     <div id="add-value-modal" class="modal">
+         <div class="modal-content">
+             <button class="close-modal" onclick="hideModal('add-value-modal')">&times;</button>
+             <div class="modal-header">
+                <h2 id="add-value-modal-title">Adicionar Valor à Meta: <span>Nome da Meta</span></h2>
+            </div>
+            <form id="add-value-form">
+                 <input type="hidden" id="add-value-goal-id">
+                 <div class="form-group">
+                     <label for="add-value-amount">Valor a Adicionar</label>
+                     <input type="number" id="add-value-amount" step="0.01" required placeholder="0.00">
+                 </div>
+                  <div class="form-group">
+                     <label for="add-value-date">Data</label>
+                     <input type="date" id="add-value-date" required>
+                 </div>
+                  <div style="text-align: right; margin-top: 1.5rem;">
+                     <button type="button" class="btn btn-light" onclick="hideModal('add-value-modal')">Cancelar</button>
+                     <button type="submit" id="save-added-value-btn" class="btn btn-primary">Adicionar</button>
+                 </div>
+            </form>
+         </div>
+    </div>
+
+    <script>
+        // --- Constantes ---
+        const WEBHOOK_URL = 'https://webhook.dev.solandox.com/webhook/fintrack';
+
+        // --- Estado da Aplicação (Exemplo Simples) ---
+        let appState = {
+            loggedIn: false, // Controla se o usuário está logado
+            currentPage: 'login-page', // Começa na página de login
+            // ... outros dados como categorias, transações carregadas, etc.
+        };
+
+        // --- Seletores DOM ---
+        const body = document.body;
+        const loginPage = document.getElementById('login-page');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const mainHeader = document.querySelector('header');
+        const mainContent = document.querySelector('main');
+        const fabButton = document.querySelector('.fab');
+        const navLinks = document.querySelectorAll('#main-nav a[data-page]');
+        const pageSections = document.querySelectorAll('.page-section');
+        const logoutButton = document.getElementById('logout-button');
+
+        // --- Funções Utilitárias ---
+
+        // Função para mostrar/ocultar páginas (seções)
+        function navigateToPage(pageId) {
+            if (appState.currentPage === pageId && pageId !== 'login-page') return; // Não faz nada se já estiver na página
+
+            pageSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === pageId) {
+                    section.classList.add('active');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('data-page') === pageId) {
+                    link.classList.add('active');
+                }
+            });
+
+            appState.currentPage = pageId;
+            console.log("Navegando para:", pageId);
+            // Poderia adicionar lógica aqui para carregar dados específicos da página se necessário
+        }
+
+        // Funções para mostrar/ocultar modais
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                 // Adicionar foco ao primeiro input do modal, se existir
+                 const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
+                 if (firstInput) {
+                     firstInput.focus();
+                 }
+            }
+        }
+
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                // Opcional: Limpar formulário do modal ao fechar
+                // const form = modal.querySelector('form');
+                // if (form) form.reset();
+            }
+        }
+
+        // Função para enviar dados para o Webhook
+        async function sendToWebhook(action, data) {
+            const payload = {
+                action: action, // Ex: 'login_attempt', 'add_transaction', 'delete_category'
+                timestamp: new Date().toISOString(),
+                payload: data
+                // Poderia adicionar mais info: user_id, session_id, etc.
+            };
+            console.log("Enviando para Webhook:", payload);
+
+            try {
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    console.error('Webhook Error:', response.status, await response.text());
+                } else {
+                    console.log('Webhook Success:', await response.json()); // Ou .text() dependendo do que o webhook retorna
+                }
+            } catch (error) {
+                console.error('Error sending to Webhook:', error);
+            }
+        }
+
+         // Função para formatar moeda (Exemplo)
+         function formatCurrency(value) {
+             return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+         }
+
+        // --- Lógica de Login/Logout ---
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            console.log("Tentativa de login:", email);
+             sendToWebhook('login_attempt', { email: email }); // Envia tentativa ao webhook
+
+            // --- VALIDAÇÃO SIMULADA ---
+            // Substituir por validação real (ex: chamada API, verificação local)
+            if (email === "teste@financas.com" && password === "123") {
+                appState.loggedIn = true;
+                loginPage.style.display = 'none'; // Esconde login page
+                body.classList.add('logged-in');   // Adiciona classe para mostrar conteúdo
+                navigateToPage('dashboard-page'); // Navega para o dashboard
+                loginError.style.display = 'none';
+                console.log("Login bem-sucedido");
+                loadInitialData(); // Carregar dados após login
+                 sendToWebhook('login_success', { email: email });
+            } else {
+                loginError.style.display = 'block';
+                 sendToWebhook('login_failed', { email: email });
+            }
+        }
+
+        function handleLogout(event) {
+            event.preventDefault();
+            console.log("Logout");
+            sendToWebhook('logout', { user: 'current_user_identifier' }); // Identificar usuário se possível
+
+            appState.loggedIn = false;
+            appState.currentPage = 'login-page';
+            body.classList.remove('logged-in'); // Remove classe, esconde conteúdo
+            loginPage.style.display = 'flex';   // Mostra login page novamente
+            // Limpar dados da aplicação aqui, se necessário
+            // Ex: limpar tabelas, gráficos, etc.
+            loginForm.reset(); // Limpa form de login
+        }
+
+        // --- Lógica de Navegação ---
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.getAttribute('data-page');
+                if (pageId) {
+                    navigateToPage(pageId);
+                }
+            });
+        });
+
+        // --- Lógica Inicial e Carregamento de Dados ---
+        function loadInitialData() {
+            console.log("Carregando dados iniciais...");
+             // 1. Carregar Categorias (para preencher selects e lista de settings)
+             loadCategories();
+             // 2. Carregar Transações (para a tabela e dashboard)
+             loadTransactions();
+             // 3. Carregar Orçamentos (para a página de orçamentos e dashboard)
+             loadBudgets();
+             // 4. Carregar Metas (para a página de metas e dashboard)
+             loadGoals();
+             // 5. Inicializar Gráficos (Dashboard, Relatórios)
+             initializeCharts();
+             // 6. Definir data padrão nos filtros
+             setDefaultDates();
+             // 7. Configurar filtro de mês inicial do dashboard/orçamento
+             setupMonthFilters();
+        }
+
+        function loadCategories() {
+            console.log("Carregando categorias...");
+             // Simulação: buscar de localStorage ou API
+             const categories = [
+                 { id: 'cat1', name: 'Alimentação', slug: 'food' },
+                 { id: 'cat2', name: 'Moradia', slug: 'housing' },
+                 { id: 'cat3', name: 'Transporte', slug: 'transport' },
+                 { id: 'cat4', name: 'Saúde', slug: 'health' },
+                 { id: 'cat5', name: 'Lazer', slug: 'leisure' },
+                 { id: 'cat6', name: 'Educação', slug: 'education' },
+                 { id: 'cat7', name: 'Salário', slug: 'salary' },
+                 { id: 'cat8', name: 'Investimento', slug: 'investment' },
+                 { id: 'cat9', name: 'Presente', slug: 'gift' },
+                 { id: 'cat10', name: 'Outros', slug: 'other' },
+             ];
+             appState.categories = categories; // Armazena no estado
+
+             // Popular Selects de Categoria
+             const categorySelects = document.querySelectorAll('#filter-category, #transaction-category, #budget-category');
+             categorySelects.forEach(select => {
+                 // Limpa opções existentes (exceto a primeira 'Todas' ou 'Selecione')
+                 while (select.options.length > 1) {
+                     select.remove(1);
+                 }
+                 categories.forEach(cat => {
+                     const option = new Option(cat.name, cat.slug); // Usar slug como value
+                     option.dataset.id = cat.id; // Armazena ID se precisar
+                     select.add(option);
+                 });
+             });
+
+            // Popular Lista de Categorias em Configurações
+            const categoryListUl = document.getElementById('category-list');
+            categoryListUl.innerHTML = ''; // Limpa lista
+            categories.forEach(cat => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${cat.name}</span>
+                    <button class="btn btn-danger btn-sm delete-category-btn" data-id="${cat.id}" data-name="${cat.name}">Excluir</button>
+                `;
+                categoryListUl.appendChild(li);
+            });
+            // Adicionar event listeners aos botões de excluir categoria DEPOIS de criá-los
+            addCategoryDeleteListeners();
+        }
+
+        function loadTransactions(filters = {}) {
+             console.log("Carregando transações com filtros:", filters);
+             // Simulação: Buscar dados (localStorage, API) e filtrar
+             // ... lógica de busca e filtro ...
+             const transactions = [ /* Array de objetos de transação */ ];
+             const tableBody = document.getElementById('transactions-table-body');
+             tableBody.innerHTML = ''; // Limpar tabela
+
+             // Popular tabela (usar dados de exemplo se 'transactions' estiver vazio)
+             const sampleData = [ /* Dados da tabela de exemplo */ ];
+             (transactions.length > 0 ? transactions : sampleData).forEach(tx => {
+                 const row = tableBody.insertRow();
+                 row.innerHTML = `
+                    <td>${tx.date || 'dd/mm/aaaa'}</td>
+                    <td>${tx.description || 'Descrição'}</td>
+                    <td><span class="category-tag category-${tx.categorySlug || 'other'}">${tx.categoryName || 'Categoria'}</span></td>
+                    <td class="${tx.type || 'expense'}" style="text-align: right;">${tx.type === 'income' ? '+' : '-'} ${formatCurrency(Math.abs(tx.amount || 0))}</td>
+                    <td class="action-buttons" style="text-align: center;">
+                        <button class="btn btn-warning btn-sm edit-transaction-btn" data-id="${tx.id}">Editar</button>
+                        <button class="btn btn-danger btn-sm delete-transaction-btn" data-id="${tx.id}">Excluir</button>
+                    </td>
+                 `;
+             });
+             // Adicionar listeners aos botões de editar/excluir transação
+             addTransactionActionListeners();
+             // Atualizar totais/gráficos do dashboard se necessário
+             updateDashboardSummary();
+        }
+
+        function loadBudgets(monthYear = '2025-04') { // Padrão para o mês atual ou selecionado
+             console.log("Carregando orçamentos para:", monthYear);
+             // Simulação: Buscar dados (localStorage, API) para o mês/ano específico
+             // ... lógica de busca ...
+             const budgets = [ /* Array de objetos de orçamento para o mês */ ];
+             const container = document.getElementById('budgets-list-container');
+             container.innerHTML = ''; // Limpar container
+
+             // Popular container com cards de orçamento
+             const sampleData = [ /* Dados de exemplo dos cards de orçamento */ ];
+              (budgets.length > 0 ? budgets : sampleData).forEach(b => {
+                  const card = document.createElement('div');
+                  card.className = 'card';
+                  // Calcular progresso, determinar classe (safe, warning, danger)
+                  const spent = b.spent || 0;
+                  const total = b.amount || 1; // Evita divisão por zero
+                  const percentage = Math.min((spent / total) * 100, 100); // Não passa de 100% visualmente na barra
+                  let progressClass = 'progress-safe';
+                  if (percentage >= 100) progressClass = 'progress-danger';
+                  else if (percentage > 80) progressClass = 'progress-warning';
+
+                  card.innerHTML = `
+                    <div class="budget-progress">
+                        <div class="budget-header">
+                            <span><span class="category-tag category-${b.categorySlug || 'other'}">${b.categoryName || 'Categoria'}</span></span>
+                            <span>${formatCurrency(spent)} / ${formatCurrency(total)}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${progressClass}" style="width: ${percentage}%"></div>
+                        </div>
+                        ${percentage >= 100 ? '<small style="color: var(--danger); font-size: 0.8em; margin-top: 2px;">Orçamento excedido!</small>' : ''}
+                         <div class="action-buttons" style="text-align: right; margin-top: 0.5rem;">
+                             <button class="btn btn-warning btn-sm edit-budget-btn" data-id="${b.id}">Editar</button>
+                             <button class="btn btn-danger btn-sm delete-budget-btn" data-id="${b.id}">Excluir</button>
+                         </div>
+                    </div>
+                  `;
+                  container.appendChild(card);
+              });
+              // Adicionar listeners aos botões de editar/excluir orçamento
+              addBudgetActionListeners();
+             // Atualizar título da seção
+             document.getElementById('budget-list-title').textContent = `Orçamentos para ${formatMonthYear(monthYear)}`;
+        }
+
+         function loadGoals() {
+             console.log("Carregando metas...");
+             // Simulação: Buscar dados (localStorage, API)
+             // ... lógica de busca ...
+             const goals = [ /* Array de objetos de metas */ ];
+             const container = document.getElementById('goals-list-container');
+             container.innerHTML = ''; // Limpar
+
+             const sampleData = [ /* Dados de exemplo dos cards de metas */ ];
+             (goals.length > 0 ? goals : sampleData).forEach(g => {
+                 const card = document.createElement('div');
+                 card.className = 'card';
+                 const current = g.currentAmount || 0;
+                 const target = g.targetAmount || 1;
+                 const percentage = Math.min((current / target) * 100, 100);
+                 let progressClass = 'progress-safe';
+                 if (percentage > 75 && percentage < 95) progressClass = 'progress-warning'; // Exemplo de lógica diferente
+                 else if (percentage >= 95) progressClass = 'progress-safe'; // Quase lá!
+                 // Adicionar lógica para prazo (ex: 'danger' se prazo próximo/passado e não concluído)
+
+                 card.innerHTML = `
+                    <div class="goal-progress">
+                        <div class="goal-header">
+                            <span>${g.name || 'Nome da Meta'}</span>
+                            <small>Meta: ${formatCurrency(target)}</small>
+                        </div>
+                        <span>${formatCurrency(current)} (${percentage.toFixed(0)}%)</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill ${progressClass}" style="width: ${percentage}%"></div>
+                        </div>
+                        ${g.deadline ? `<small>Prazo: ${formatDate(g.deadline)}</small>` : ''}
+                         <div class="action-buttons" style="text-align: right; margin-top: 0.5rem;">
+                             <button class="btn btn-success btn-sm add-goal-value-btn" data-id="${g.id}" data-name="${g.name}">Adicionar Valor</button>
+                             <button class="btn btn-warning btn-sm edit-goal-btn" data-id="${g.id}">Editar</button>
+                             <button class="btn btn-danger btn-sm delete-goal-btn" data-id="${g.id}">Excluir</button>
+                         </div>
+                    </div>
+                 `;
+                 container.appendChild(card);
+             });
+            // Adicionar listeners aos botões de ação das metas
+            addGoalActionListeners();
+         }
+
+         function updateDashboardSummary() {
+             console.log("Atualizando resumos do dashboard...");
+             // Simulação: Calcular totais de Receita, Despesa, Saldo para o mês selecionado
+             // Atualizar os .summary-amount nos cards do dashboard
+         }
+
+         function initializeCharts() {
+             console.log("Inicializando gráficos...");
+             // Gráfico de Exemplo Dashboard (Pizza de Despesas)
+             const ctxDash = document.getElementById('expenseChartDashboard');
+             if (ctxDash && Chart) {
+                 // Destruir gráfico existente se houver
+                 if (window.dashboardChart instanceof Chart) {
+                     window.dashboardChart.destroy();
+                 }
+                 // Simulação de dados
+                 const data = {
+                     labels: ['Alimentação', 'Moradia', 'Transporte', 'Lazer', 'Saúde', 'Outros'],
+                     datasets: [{
+                         label: 'Despesas por Categoria',
+                         data: [250, 1200, 180, 55, 85, 100], // Valores de exemplo
+                         backgroundColor: [
+                             '#FF9800', '#9C27B0', '#03A9F4', '#8BC34A', '#E91E63', '#795548'
+                         ],
+                         hoverOffset: 4
+                     }]
+                 };
+                 window.dashboardChart = new Chart(ctxDash, {
+                     type: 'doughnut', // Ou 'pie'
+                     data: data,
+                     options: {
+                         responsive: true,
+                         maintainAspectRatio: false,
+                         plugins: {
+                             legend: {
+                                 position: 'bottom', // Posição da legenda
+                             }
+                         }
+                     }
+                 });
+             }
+             // Inicializar outros gráficos (Relatórios) aqui...
+         }
+
+         function setDefaultDates() {
+            const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+            const filterEndDate = document.getElementById('filter-end-date');
+            const transactionDate = document.getElementById('transaction-date');
+            const addValueDate = document.getElementById('add-value-date');
+
+            if(filterEndDate && !filterEndDate.value) filterEndDate.value = today;
+            if(transactionDate && !transactionDate.value) transactionDate.value = today;
+            if(addValueDate && !addValueDate.value) addValueDate.value = today;
+
+             // Definir data início padrão (ex: primeiro dia do mês atual)
+             const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+             const filterStartDate = document.getElementById('filter-start-date');
+              if(filterStartDate && !filterStartDate.value) filterStartDate.value = firstDayOfMonth;
+         }
+
+         function setupMonthFilters() {
+             const currentMonthYear = new Date().toISOString().slice(0, 7); // YYYY-MM
+             const budgetMonthInput = document.getElementById('budget-filter-month');
+             const dashboardMonthSelect = document.getElementById('dashboard-month-filter');
+
+             if (budgetMonthInput && !budgetMonthInput.value) budgetMonthInput.value = currentMonthYear;
+             if (dashboardMonthSelect) {
+                 // Tentar selecionar o mês atual, se existir na lista
+                 const currentOption = dashboardMonthSelect.querySelector(`option[value="${currentMonthYear}"]`);
+                 if (currentOption) {
+                     dashboardMonthSelect.value = currentMonthYear;
+                 } else {
+                     // Adicionar opção para o mês atual se não existir (ou apenas usar o primeiro da lista)
+                     console.warn("Mês atual não encontrado no filtro do dashboard.");
+                 }
+                 updateDashboardMonthDisplay(dashboardMonthSelect.value); // Atualiza texto
+             }
+         }
+
+         // Função para formatar 'YYYY-MM' para 'Mês Ano'
+         function formatMonthYear(yyyymm) {
+             const [year, month] = yyyymm.split('-');
+             const date = new Date(year, month - 1); // Mês é 0-indexed
+             return date.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+         }
+        // Função para formatar 'YYYY-MM-DD' para 'dd/mm/yyyy'
+         function formatDate(yyyymmdd) {
+             if (!yyyymmdd) return '';
+             const [year, month, day] = yyyymmdd.split('-');
+             return `${day}/${month}/${year}`;
+         }
+
+        // --- Event Listeners ---
+
+        // Login
+        loginForm.addEventListener('submit', handleLogin);
+        logoutButton.addEventListener('click', handleLogout);
+
+        // Modais
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Encontra o modal pai e o esconde
+                const modal = btn.closest('.modal');
+                if (modal) hideModal(modal.id);
+            });
+        });
+        // Fechar modal clicando fora do conteúdo
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) { // Clicou no fundo escuro
+                    hideModal(modal.id);
+                }
+            });
+        });
+
+         // --- Transações ---
+         const filterTransactionsBtn = document.getElementById('filter-transactions-btn');
+         const clearFilterBtn = document.getElementById('clear-filter-btn');
+         const transactionForm = document.getElementById('transaction-form');
+
+         if (filterTransactionsBtn) {
+             filterTransactionsBtn.addEventListener('click', () => {
+                 const filters = {
+                     startDate: document.getElementById('filter-start-date').value,
+                     endDate: document.getElementById('filter-end-date').value,
+                     type: document.getElementById('filter-type').value,
+                     category: document.getElementById('filter-category').value,
+                 };
+                 loadTransactions(filters); // Recarrega a lista com filtros
+             });
+         }
+         if (clearFilterBtn) {
+             clearFilterBtn.addEventListener('click', () => {
+                 document.getElementById('filter-form').reset();
+                 setDefaultDates(); // Reseta datas padrão
+                 loadTransactions({}); // Recarrega lista sem filtros
+             });
+         }
+         if (transactionForm) {
+             transactionForm.addEventListener('submit', (e) => {
+                 e.preventDefault();
+                 const transactionId = document.getElementById('transaction-id').value;
+                 const data = {
+                     id: transactionId || `tx_${Date.now()}`, // Gera ID se for novo
+                     type: document.getElementById('transaction-type').value,
+                     description: document.getElementById('transaction-description').value,
+                     amount: parseFloat(document.getElementById('transaction-amount').value),
+                     date: document.getElementById('transaction-date').value,
+                     categorySlug: document.getElementById('transaction-category').value,
+                     // Obter categoryName do select:
+                     categoryName: document.getElementById('transaction-category').selectedOptions[0]?.textContent,
+                     notes: document.getElementById('transaction-notes').value,
+                 };
+
+                 if (transactionId) {
+                     // Lógica para EDITAR transação
+                     console.log("Editando Transação:", data);
+                     sendToWebhook('edit_transaction', data);
+                     // Atualizar no estado/localStorage/API
+                 } else {
+                     // Lógica para ADICIONAR transação
+                     console.log("Adicionando Transação:", data);
+                      sendToWebhook('add_transaction', data);
+                      // Adicionar no estado/localStorage/API
+                 }
+                 hideModal('transaction-modal');
+                 loadTransactions(); // Recarrega lista
+                 transactionForm.reset();
+                 setDefaultDates();
+             });
+         }
+
+         function addTransactionActionListeners() {
+            document.querySelectorAll('.edit-transaction-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const transactionId = e.target.dataset.id;
+                    console.log("Clicou Editar Transação:", transactionId);
+                    // 1. Buscar dados da transação pelo ID (do estado, localStorage, API)
+                    const transactionData = { /* Dados da transação a ser editada */
+                        id: transactionId, type: 'expense', description: 'Supermercado Extra', amount: 250.00, date: '2025-04-15', categorySlug: 'food', notes: ''
+                    }; // Dados simulados
+                    // 2. Preencher o formulário do modal
+                    document.getElementById('transaction-id').value = transactionData.id;
+                    document.getElementById('transaction-modal-title').textContent = "Editar Transação";
+                    document.getElementById('transaction-type').value = transactionData.type;
+                    document.getElementById('transaction-description').value = transactionData.description;
+                    document.getElementById('transaction-amount').value = transactionData.amount.toFixed(2);
+                    document.getElementById('transaction-date').value = transactionData.date;
+                    document.getElementById('transaction-category').value = transactionData.categorySlug;
+                    document.getElementById('transaction-notes').value = transactionData.notes;
+                    // 3. Mostrar o modal
+                    showModal('transaction-modal');
+                });
+            });
+
+            document.querySelectorAll('.delete-transaction-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const transactionId = e.target.dataset.id;
+                    // Usar um modal de confirmação genérico ou window.confirm
+                    if (confirm(`Tem certeza que deseja excluir esta transação (${transactionId})?`)) {
+                        console.log("Excluindo Transação:", transactionId);
+                        sendToWebhook('delete_transaction', { id: transactionId });
+                        // Lógica para excluir (do estado, localStorage, API)
+                        loadTransactions(); // Recarrega lista
+                    }
+                });
+            });
+         }
+        // Listener para o botão + Nova Transação no header do card (chama a mesma função que o FAB)
+        document.querySelector('#transactions-page .card-header .btn-primary')?.addEventListener('click', () => showModal('transaction-modal'));
+
+
+        // --- Orçamentos ---
+         const viewBudgetBtn = document.getElementById('view-budget-btn');
+         const budgetMonthFilter = document.getElementById('budget-filter-month');
+         const budgetForm = document.getElementById('budget-form');
+
+         if (viewBudgetBtn && budgetMonthFilter) {
+             viewBudgetBtn.addEventListener('click', () => {
+                 loadBudgets(budgetMonthFilter.value);
+             });
+             // Opcional: Carregar ao mudar o mês também
+              budgetMonthFilter.addEventListener('change', () => {
+                 loadBudgets(budgetMonthFilter.value);
+             });
+         }
+
+         if (budgetForm) {
+            budgetForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const budgetId = document.getElementById('budget-id').value;
+                const data = {
+                    id: budgetId || `b_${Date.now()}`,
+                    categorySlug: document.getElementById('budget-category').value,
+                    categoryName: document.getElementById('budget-category').selectedOptions[0]?.textContent,
+                    amount: parseFloat(document.getElementById('budget-amount').value),
+                    monthYear: document.getElementById('budget-month').value, // YYYY-MM
+                };
+
+                if (budgetId) {
+                     console.log("Editando Orçamento:", data);
+                     sendToWebhook('edit_budget', data);
+                     // Atualizar...
+                } else {
+                     console.log("Adicionando Orçamento:", data);
+                     sendToWebhook('add_budget', data);
+                     // Adicionar...
+                }
+                hideModal('budget-modal');
+                loadBudgets(data.monthYear); // Recarrega para o mês do orçamento salvo
+                 budgetForm.reset();
+                 setupMonthFilters(); // Reseta mês padrão no form
+            });
+         }
+
+         function addBudgetActionListeners() {
+            document.querySelectorAll('.edit-budget-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const budgetId = e.target.dataset.id;
+                    console.log("Clicou Editar Orçamento:", budgetId);
+                    // 1. Buscar dados do orçamento
+                     const budgetData = {id: budgetId, categorySlug: 'food', amount: 800.00, monthYear: '2025-04'}; // Simulado
+                    // 2. Preencher form
+                    document.getElementById('budget-id').value = budgetData.id;
+                    document.getElementById('budget-modal-title').textContent = "Editar Orçamento";
+                    document.getElementById('budget-category').value = budgetData.categorySlug;
+                    document.getElementById('budget-amount').value = budgetData.amount.toFixed(2);
+                    document.getElementById('budget-month').value = budgetData.monthYear;
+                     // 3. Mostrar modal
+                     showModal('budget-modal');
+                });
+            });
+            document.querySelectorAll('.delete-budget-btn').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                    const budgetId = e.target.dataset.id;
+                    if (confirm(`Tem certeza que deseja excluir este orçamento (${budgetId})?`)) {
+                        console.log("Excluindo Orçamento:", budgetId);
+                         sendToWebhook('delete_budget', { id: budgetId });
+                        // Excluir...
+                        loadBudgets(document.getElementById('budget-filter-month').value); // Recarrega
+                    }
+                });
+            });
+         }
+         // Listener para o botão + Novo Orçamento
+         document.querySelector('#budgets-page .card-header .btn-primary')?.addEventListener('click', () => {
+             document.getElementById('budget-modal-title').textContent = "Novo Orçamento";
+             document.getElementById('budget-form').reset();
+             document.getElementById('budget-id').value = ''; // Limpa ID oculto
+             // Define o mês padrão no modal como o mês selecionado no filtro
+             const selectedMonth = document.getElementById('budget-filter-month').value;
+             document.getElementById('budget-month').value = selectedMonth;
+             showModal('budget-modal');
+         });
+
+        // --- Relatórios ---
+        const generateReportBtn = document.getElementById('generate-report-btn');
+        if (generateReportBtn) {
+            generateReportBtn.addEventListener('click', () => {
+                console.log("Gerando relatório...");
+                 sendToWebhook('generate_report', { type: 'financial_summary', period: 'current_month' }); // Exemplo
+                const outputArea = document.getElementById('report-output-area');
+                outputArea.innerHTML = '<p>Relatório financeiro gerado (implementar visualização)...</p>';
+                // Lógica para buscar dados, processar e exibir o relatório
+            });
+        }
+
+        // --- Metas ---
+         const goalForm = document.getElementById('goal-form');
+         const addValueForm = document.getElementById('add-value-form');
+
+         if (goalForm) {
+             goalForm.addEventListener('submit', (e) => {
+                 e.preventDefault();
+                 const goalId = document.getElementById('goal-id').value;
+                 const data = {
+                     id: goalId || `g_${Date.now()}`,
+                     name: document.getElementById('goal-name').value,
+                     targetAmount: parseFloat(document.getElementById('goal-target-amount').value),
+                     currentAmount: parseFloat(document.getElementById('goal-current-amount').value || 0),
+                     deadline: document.getElementById('goal-deadline').value || null,
+                 };
+                 if (goalId) {
+                    console.log("Editando Meta:", data);
+                    sendToWebhook('edit_goal', data);
+                    // Atualizar...
+                 } else {
+                    console.log("Adicionando Meta:", data);
+                    sendToWebhook('add_goal', data);
+                    // Adicionar...
+                 }
+                 hideModal('goal-modal');
+                 loadGoals(); // Recarrega
+                 goalForm.reset();
+             });
+         }
+
+         if (addValueForm) {
+            addValueForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const goalId = document.getElementById('add-value-goal-id').value;
+                const data = {
+                    goalId: goalId,
+                    amount: parseFloat(document.getElementById('add-value-amount').value),
+                    date: document.getElementById('add-value-date').value,
+                };
+                console.log("Adicionando valor à meta:", data);
+                sendToWebhook('add_goal_value', data);
+                 // Lógica para adicionar valor à meta (atualizar currentAmount)
+                 hideModal('add-value-modal');
+                 loadGoals(); // Recarrega
+                 addValueForm.reset();
+                 setDefaultDates(); // Reseta data padrão no form
+            });
+         }
+
+         function addGoalActionListeners() {
+             document.querySelectorAll('.add-goal-value-btn').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                     const goalId = e.target.dataset.id;
+                     const goalName = e.target.dataset.name || 'esta meta';
+                     console.log("Clicou Adicionar Valor à Meta:", goalId);
+                     document.getElementById('add-value-goal-id').value = goalId;
+                     document.querySelector('#add-value-modal-title span').textContent = goalName;
+                     document.getElementById('add-value-form').reset(); // Limpa form
+                     setDefaultDates(); // Define data padrão
+                     showModal('add-value-modal');
+                 });
+             });
+
+             document.querySelectorAll('.edit-goal-btn').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                     const goalId = e.target.dataset.id;
+                     console.log("Clicou Editar Meta:", goalId);
+                    // 1. Buscar dados da meta
+                     const goalData = {id: goalId, name: 'Viagem Férias', targetAmount: 5000, currentAmount: 2500, deadline: '2025-12-31'}; // Simulado
+                    // 2. Preencher form
+                    document.getElementById('goal-id').value = goalData.id;
+                    document.getElementById('goal-modal-title').textContent = "Editar Meta";
+                    document.getElementById('goal-name').value = goalData.name;
+                    document.getElementById('goal-target-amount').value = goalData.targetAmount.toFixed(2);
+                    document.getElementById('goal-current-amount').value = goalData.currentAmount.toFixed(2);
+                    document.getElementById('goal-deadline').value = goalData.deadline;
+                    // 3. Mostrar modal
+                    showModal('goal-modal');
+                 });
+             });
+
+            document.querySelectorAll('.delete-goal-btn').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                    const goalId = e.target.dataset.id;
+                    if (confirm(`Tem certeza que deseja excluir esta meta (${goalId})?`)) {
+                        console.log("Excluindo Meta:", goalId);
+                         sendToWebhook('delete_goal', { id: goalId });
+                        // Excluir...
+                        loadGoals(); // Recarrega
+                    }
+                });
+            });
+         }
+        // Listener para o botão + Nova Meta
+        document.querySelector('#goals-page .card-header .btn-primary')?.addEventListener('click', () => {
+            document.getElementById('goal-modal-title').textContent = "Nova Meta";
+            document.getElementById('goal-form').reset();
+            document.getElementById('goal-id').value = '';
+            showModal('goal-modal');
+        });
+
+
+        // --- Configurações (Categorias) ---
+         const addCategoryBtn = document.getElementById('add-category-btn');
+         const newCategoryNameInput = document.getElementById('new-category-name');
+
+         if (addCategoryBtn && newCategoryNameInput) {
+             addCategoryBtn.addEventListener('click', () => {
+                 const categoryName = newCategoryNameInput.value.trim();
+                 if (categoryName) {
+                     const data = {
+                         id: `cat_${Date.now()}`,
+                         name: categoryName,
+                         // Gerar slug a partir do nome (simplificado)
+                         slug: categoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+                     };
+                     console.log("Adicionando Categoria:", data);
+                      sendToWebhook('add_category', data);
+                     // Adicionar no estado/localStorage/API
+                     loadCategories(); // Recarrega a lista e selects
+                     newCategoryNameInput.value = ''; // Limpa input
+                 } else {
+                     alert("Por favor, digite o nome da categoria.");
+                 }
+             });
+             // Permitir adicionar com Enter
+             newCategoryNameInput.addEventListener('keypress', (e) => {
+                 if (e.key === 'Enter') {
+                     addCategoryBtn.click();
+                 }
+             });
+         }
+
+         function addCategoryDeleteListeners() {
+             document.querySelectorAll('.delete-category-btn').forEach(btn => {
+                // Remover listener antigo para evitar duplicação se chamado múltiplas vezes
+                btn.replaceWith(btn.cloneNode(true));
+            });
+            // Adicionar novos listeners
+             document.querySelectorAll('.delete-category-btn').forEach(btn => {
+                 btn.addEventListener('click', (e) => {
+                     const categoryId = e.target.dataset.id;
+                     const categoryName = e.target.dataset.name || 'esta categoria';
+                     if (confirm(`Tem certeza que deseja excluir a categoria "${categoryName}" (${categoryId})? Isso pode afetar transações existentes.`)) {
+                         console.log("Excluindo Categoria:", categoryId);
+                         sendToWebhook('delete_category', { id: categoryId });
+                         // Lógica para excluir (do estado, localStorage, API)
+                         // ATENÇÃO: Decidir o que fazer com transações que usam esta categoria!
+                         loadCategories(); // Recarrega
+                     }
+                 });
+             });
+         }
+
+         // --- Dashboard Filter ---
+         const dashboardMonthFilter = document.getElementById('dashboard-month-filter');
+         if (dashboardMonthFilter) {
+             dashboardMonthFilter.addEventListener('change', (e) => {
+                 const selectedMonthYear = e.target.value;
+                 console.log("Dashboard: Filtro de mês alterado para", selectedMonthYear);
+                 updateDashboardMonthDisplay(selectedMonthYear);
+                 // Recarregar dados do dashboard para o mês selecionado
+                 // Ex: loadDashboardData(selectedMonthYear);
+                 updateDashboardSummary(); // Recalcular resumos
+                 initializeCharts(); // Recarregar gráficos com dados do novo mês
+                 // Atualizar lista de orçamentos no dashboard (se houver)
+             });
+         }
+         function updateDashboardMonthDisplay(selectedMonthYear) {
+             const displayElement = document.getElementById('dashboard-month-display');
+             if(displayElement) {
+                displayElement.textContent = `Visão geral para ${formatMonthYear(selectedMonthYear)}`;
+             }
+         }
+
+        // --- Inicialização da Aplicação ---
+        function initializeApp() {
+             console.log("Inicializando FinTrack...");
+             // Verificar se já existe um estado de login (ex: em localStorage)
+             // Se logado:
+             // appState.loggedIn = true;
+             // body.classList.add('logged-in');
+             // navigateToPage('dashboard-page');
+             // loadInitialData();
+             // Se não logado:
+             appState.loggedIn = false;
+             body.classList.remove('logged-in');
+             loginPage.style.display = 'flex'; // Garante que a página de login seja mostrada
+             appState.currentPage = 'login-page';
+
+              // Adiciona listeners que só precisam ser adicionados uma vez
+              addCategoryDeleteListeners(); // Adiciona listener para categorias iniciais (se houver)
+
+              // Limpar modais ao iniciar (opcional)
+              document.querySelectorAll('.modal form').forEach(form => form.reset());
+        }
+
+        // --- Ponto de Entrada ---
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+    </script>
+</body>
+</html>
