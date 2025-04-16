@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatCurrency, formatDate } from "@/lib/formats";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getQueryFn } from "@/lib/queryClient";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { getQueryFn, apiRequest } from "@/lib/queryClient";
 import { Category, TransactionWithCategory } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 import TransactionModal from "@/components/TransactionModal";
 
 export default function Transactions() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [type, setType] = useState("all");
@@ -23,6 +37,10 @@ export default function Transactions() {
   // Estados para controlar o modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null);
+  
+  // Estados para o diálogo de confirmação de exclusão
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<TransactionWithCategory | null>(null);
 
   // Buscar todas as transações
   const { data: transactions, isLoading } = useQuery({
@@ -31,9 +49,59 @@ export default function Transactions() {
   });
 
   // Buscar categorias para o filtro
-  const { data: categories } = useQuery({
+  const { data: categories } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
     queryFn: getQueryFn({ on401: "throw" }),
+  });
+  
+  // Mutação para excluir transação
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!transactionToDelete) throw new Error("Transaction not found");
+      const response = await apiRequest('DELETE', `/api/transactions/${transactionToDelete.id}`);
+      
+      // Enviar para webhook
+      try {
+        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "delete",
+            entityType: "transaction",
+            entityId: transactionToDelete.id,
+            data: transactionToDelete,
+            timestamp: new Date().toISOString(),
+          }),
+        });
+      } catch (error) {
+        console.error("Erro ao enviar para webhook:", error);
+      }
+      
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Transação excluída com sucesso",
+        description: "A transação foi removida do sistema.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/transactions/recent'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/summary'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/summary/categories'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/summary/trends'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/budgets'] });
+      setIsDeleteDialogOpen(false);
+      setTransactionToDelete(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao excluir transação",
+        description: error.message || "Não foi possível excluir a transação. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   });
 
   // Função para limpar filtros
@@ -61,7 +129,7 @@ export default function Transactions() {
   };
   
   // Filtro de transações
-  const filteredTransactions = transactions || [];
+  const filteredTransactions = transactions || [] as TransactionWithCategory[];
   
   // Função para aplicar filtros (no momento é simulada)
   const applyFilters = () => {
@@ -182,7 +250,10 @@ export default function Transactions() {
                             variant="destructive" 
                             size="sm" 
                             className="h-8 text-xs"
-                            onClick={() => openEditTransactionModal(transaction.id)}
+                            onClick={() => {
+                              setTransactionToDelete(transaction);
+                              setIsDeleteDialogOpen(true);
+                            }}
                           >
                             Excluir
                           </Button>
@@ -203,6 +274,38 @@ export default function Transactions() {
         onClose={closeModal}
         transactionId={selectedTransactionId}
       />
+      
+      {/* Diálogo de confirmação de exclusão */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Transação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a transação "{transactionToDelete?.description}"? 
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setTransactionToDelete(null);
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
