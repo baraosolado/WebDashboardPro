@@ -85,13 +85,25 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   // Atualizar formulário quando carregar a meta
   useEffect(() => {
     if (goal) {
-      const targetDate = new Date(goal.targetDate).toISOString().substring(0, 10);
+      let targetDateFormatted = "";
+      
+      try {
+        // Garantir que a data é processada apenas se for válida
+        if (goal.targetDate) {
+          const targetDate = new Date(goal.targetDate);
+          if (!isNaN(targetDate.getTime())) {
+            targetDateFormatted = targetDate.toISOString().substring(0, 10);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao formatar data:", error);
+      }
       
       form.reset({
         name: goal.name,
         targetAmount: goal.targetAmount,
         currentAmount: goal.currentAmount,
-        targetDate: targetDate,
+        targetDate: targetDateFormatted,
         description: goal.description || "",
       });
     } else {
