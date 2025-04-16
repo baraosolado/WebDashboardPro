@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, real, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -29,16 +30,36 @@ export const transactions = pgTable("transactions", {
   amount: real("amount").notNull(),
   date: timestamp("date").notNull().defaultNow(),
   type: transactionTypeEnum("type").notNull(),
-  categoryId: integer("category_id").notNull(),
+  categoryId: integer("category_id").notNull().references(() => categories.id),
   notes: text("notes"),
 });
 
 export const budgets = pgTable("budgets", {
   id: serial("id").primaryKey(),
-  categoryId: integer("category_id").notNull(),
+  categoryId: integer("category_id").notNull().references(() => categories.id),
   amount: real("amount").notNull(),
   period: text("period").notNull().default("monthly"),
 });
+
+// Define relationships
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  transactions: many(transactions),
+  budgets: many(budgets),
+}));
+
+export const transactionsRelations = relations(transactions, ({ one }) => ({
+  category: one(categories, {
+    fields: [transactions.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const budgetsRelations = relations(budgets, ({ one }) => ({
+  category: one(categories, {
+    fields: [budgets.categoryId],
+    references: [categories.id],
+  }),
+}));
 
 // Zod schemas
 export const insertUserSchema = createInsertSchema(users).pick({
