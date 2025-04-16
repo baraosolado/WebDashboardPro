@@ -1,0 +1,112 @@
+import { pgTable, text, serial, integer, real, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// Enums
+export const transactionTypeEnum = pgEnum('transaction_type', ['income', 'expense']);
+export const categoryColorEnum = pgEnum('category_color', [
+  'green', 'blue', 'purple', 'orange', 'pink', 'teal', 'red', 'yellow', 'indigo', 'gray'
+]);
+
+// Tables
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+});
+
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  color: categoryColorEnum("color").notNull(),
+  icon: text("icon"),
+  type: transactionTypeEnum("type").notNull(),
+});
+
+export const transactions = pgTable("transactions", {
+  id: serial("id").primaryKey(),
+  description: text("description").notNull(),
+  amount: real("amount").notNull(),
+  date: timestamp("date").notNull().defaultNow(),
+  type: transactionTypeEnum("type").notNull(),
+  categoryId: integer("category_id").notNull(),
+  notes: text("notes"),
+});
+
+export const budgets = pgTable("budgets", {
+  id: serial("id").primaryKey(),
+  categoryId: integer("category_id").notNull(),
+  amount: real("amount").notNull(),
+  period: text("period").notNull().default("monthly"),
+});
+
+// Zod schemas
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+});
+
+export const insertCategorySchema = createInsertSchema(categories).pick({
+  name: true,
+  color: true,
+  icon: true,
+  type: true,
+});
+
+export const insertTransactionSchema = createInsertSchema(transactions).pick({
+  description: true,
+  amount: true,
+  date: true,
+  type: true,
+  categoryId: true,
+  notes: true,
+});
+
+export const insertBudgetSchema = createInsertSchema(budgets).pick({
+  categoryId: true,
+  amount: true,
+  period: true,
+});
+
+// Types
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+
+export type Budget = typeof budgets.$inferSelect;
+export type InsertBudget = z.infer<typeof insertBudgetSchema>;
+
+// Extended types for frontend use
+export type TransactionWithCategory = Transaction & {
+  category: Category;
+};
+
+export type BudgetWithCategory = Budget & {
+  category: Category;
+  spent: number;
+};
+
+export type TransactionSummary = {
+  income: number;
+  expense: number;
+  balance: number;
+};
+
+export type CategorySummary = {
+  categoryId: number;
+  categoryName: string;
+  categoryColor: string;
+  amount: number;
+  percentage?: number;
+};
+
+export type MonthlyTrend = {
+  month: string;
+  income: number;
+  expense: number;
+};
