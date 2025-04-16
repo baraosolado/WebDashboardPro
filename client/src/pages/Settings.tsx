@@ -3,12 +3,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
+import { getQueryFn, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Category } from "@shared/schema";
+import CategoryModal from "@/components/CategoryModal";
 
 // Schema para validação do perfil
 const profileSchema = z.object({
@@ -25,6 +27,10 @@ export default function Settings() {
   const queryClient = useQueryClient();
   
   const [newCategory, setNewCategory] = useState("");
+  
+  // Estados para gerenciar o modal de categoria
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
   // Buscar categorias
   const { data: categories, isLoading } = useQuery({
@@ -42,12 +48,11 @@ export default function Settings() {
     },
   });
 
-  // Mutação para salvar alterações de perfil (simulada)
+  // Mutação para salvar alterações de perfil
   const updateProfileMutation = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return data;
+      const response = await apiRequest("PUT", "/api/user/profile", data);
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -64,12 +69,16 @@ export default function Settings() {
     },
   });
 
-  // Mutação para adicionar categoria (simulada)
+  // Mutação para adicionar categoria
   const addCategoryMutation = useMutation({
-    mutationFn: async (name: string) => {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { id: Math.random().toString(), name };
+    mutationFn: async (data: { name: string, type: string, color: string }) => {
+      const response = await apiRequest("POST", "/api/categories", data);
+      const result = await response.json();
+      
+      // Enviar para webhook
+      await sendToWebhook("create", { ...data, id: "new" });
+      
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -79,21 +88,28 @@ export default function Settings() {
         description: "A categoria foi adicionada com sucesso.",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erro ao adicionar categoria",
         description: "Não foi possível adicionar a categoria. Tente novamente.",
         variant: "destructive",
       });
+      console.error("Erro ao adicionar categoria:", error);
     },
   });
 
-  // Mutação para excluir categoria (simulada)
+  // Mutação para excluir categoria
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
-      // Simular API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return id;
+      const category = categories?.find((c: Category) => c.id === id);
+      const response = await apiRequest("DELETE", `/api/categories/${id}`);
+      
+      // Enviar para webhook
+      if (category) {
+        await sendToWebhook("delete", category, id);
+      }
+      
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -102,14 +118,56 @@ export default function Settings() {
         description: "A categoria foi excluída com sucesso.",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erro ao excluir categoria",
         description: "Não foi possível excluir a categoria. Tente novamente.",
         variant: "destructive",
       });
+      console.error("Erro ao excluir categoria:", error);
     },
   });
+  
+  // Função para enviar dados para o webhook
+  const sendToWebhook = async (
+    action: "create" | "update" | "delete", 
+    data: any, 
+    id?: number | null
+  ) => {
+    try {
+      await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          entityType: "category",
+          entityId: id || "new",
+          data,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (error) {
+      console.error("Erro ao enviar para webhook:", error);
+    }
+  };
+
+  // Funções para gerenciar o modal
+  const openNewCategoryModal = () => {
+    setSelectedCategoryId(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const openEditCategoryModal = (categoryId: number) => {
+    setSelectedCategoryId(categoryId);
+    setIsCategoryModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsCategoryModalOpen(false);
+    setSelectedCategoryId(null);
+  };
 
   const onSubmitProfile = (data: ProfileFormValues) => {
     updateProfileMutation.mutate(data);
@@ -117,7 +175,11 @@ export default function Settings() {
 
   const handleAddCategory = () => {
     if (newCategory.trim()) {
-      addCategoryMutation.mutate(newCategory);
+      addCategoryMutation.mutate({
+        name: newCategory,
+        type: "expense", // Valor padrão
+        color: "green", // Valor padrão
+      });
     }
   };
 
@@ -191,7 +253,15 @@ export default function Settings() {
 
         {/* Gerenciar Categorias */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-lg font-semibold text-green-600 mb-4 pb-2 border-b">Gerenciar Categorias</h2>
+          <div className="flex justify-between items-center mb-4 pb-2 border-b">
+            <h2 className="text-lg font-semibold text-green-600">Gerenciar Categorias</h2>
+            <Button 
+              variant="default"
+              onClick={openNewCategoryModal}
+            >
+              + Nova Categoria
+            </Button>
+          </div>
           
           <div className="flex gap-2 mb-4">
             <Input
@@ -214,17 +284,34 @@ export default function Settings() {
             <div className="text-center p-4 text-gray-500">Nenhuma categoria encontrada.</div>
           ) : (
             <ul className="border rounded-md max-h-72 overflow-y-auto">
-              {categories.map((category: any) => (
+              {categories.map((category: Category) => (
                 <li key={category.id} className="flex justify-between items-center p-3 border-b last:border-b-0">
-                  <span>{category.name}</span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteCategory(category.id)}
-                    disabled={deleteCategoryMutation.isPending}
-                  >
-                    Excluir
-                  </Button>
+                  <div className="flex items-center">
+                    <span 
+                      className={`inline-block w-3 h-3 rounded-full mr-3 bg-${category.color}-500`}
+                    />
+                    <span>{category.name}</span>
+                    <span className="text-xs text-gray-500 ml-2">
+                      ({category.type === 'income' ? 'Receita' : 'Despesa'})
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditCategoryModal(category.id)}
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteCategory(category.id)}
+                      disabled={deleteCategoryMutation.isPending}
+                    >
+                      Excluir
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -237,6 +324,13 @@ export default function Settings() {
           <p className="text-gray-500">Opções como moeda padrão, notificações, etc., podem ser adicionadas aqui.</p>
         </div>
       </div>
+      
+      {/* Modal de Categoria */}
+      <CategoryModal 
+        isOpen={isCategoryModalOpen}
+        onClose={closeModal}
+        categoryId={selectedCategoryId}
+      />
     </main>
   );
 }
