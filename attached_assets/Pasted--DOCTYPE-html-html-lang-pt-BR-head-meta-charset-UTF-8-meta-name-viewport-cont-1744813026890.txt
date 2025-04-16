@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrack - App de Finanças Pessoais</title>
+    <!-- Importação da biblioteca Chart.js antes de qualquer script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --tertiary-color: #607D8B;
+            --light-bg: #f5f5f5;
+            --dark-text: #333;
+            --light-text: #fff;
+            --danger: #f44336;
+            --warning: #ff9800;
+            --success: #4CAF50;
+            --info: #2196F3;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: fixed;
+            width: 100%;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 1rem;
+        }
+        
+        nav ul li a {
+            color: var(--light-text);
+            text-decoration: none;
+            padding: 0.5rem;
+        }
+        
+        nav ul li a:hover {
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+        
+        main {
+            padding: 5rem 1rem 1rem 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--tertiary-color);
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .summary-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .summary-card.income {
+            border-top: 4px solid var(--success);
+        }
+        
+        .summary-card.expense {
+            border-top: 4px solid var(--danger);
+        }
+        
+        .summary-card.balance {
+            border-top: 4px solid var(--info);
+        }
+        
+        .summary-amount {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .income .summary-amount {
+            color: var(--success);
+        }
+        
+        .expense .summary-amount {
+            color: var(--danger);
+        }
+        
+        .balance .summary-amount {
+            color: var(--info);
+        }
+        
+        .transaction-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .transaction-list th, .transaction-list td {
+            text-align: left;
+            padding: 0.8rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .transaction-list th {
+            background-color: #f9f9f9;
+            color: var(--tertiary-color);
+        }
+        
+        .transaction-list tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .category-tag {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: white;
+        }
+        
+        .category-food {
+            background-color: #FF9800;
+        }
+        
+        .category-housing {
+            background-color: #9C27B0;
+        }
+        
+        .category-transport {
+            background-color: #03A9F4;
+        }
+        
+        .category-health {
+            background-color: #E91E63;
+        }
+        
+        .category-salary {
+            background-color: #4CAF50;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 99;
+        }
+        
+        .budget-progress {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+        
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+        }
+        
+        .progress-safe {
+            background-color: var(--success);
+        }
+        
+        .progress-warning {
+            background-color: var(--warning);
+        }
+        
+        .progress-danger {
+            background-color: var(--danger);
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+        
+        .close-modal {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--tertiary-color);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            color: var(--tertiary-color);
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            nav ul {
+                display: none;
+            }
+            
+            .fab {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">FinTrack</div>
+        <nav>
+            <ul>
+                <li><a href="#" class="active">Dashboard</a></li>
+                <li><a href="#">Transações</a></li>
+                <li><a href="#">Orçamentos</a></li>
+                <li><a href="#">Relatórios</a></li>
+                <li><a href="#">Metas</a></li>
+                <li><a href="#">Configurações</a></li>
+            </ul>
+        </nav>
+    </header>
+    
+    <main>
+        <h1>Dashboard Financeiro</h1>
+        <p>Visão geral das suas finanças - Abril 2025</p>
+        
+        <div class="summary-cards">
+            <div class="summary-card balance">
+                <h3>Saldo Total</h3>
+                <div class="summary-amount">R$ 3.250,00</div>
+                <p>Atualizado hoje</p>
+            </div>
+            <div class="summary-card income">
+                <h3>Receitas</h3>
+                <div class="summary-amount">R$ 5.000,00</div>
+                <p>Este mês</p>
+            </div>
+            <div class="summary-card expense">
+                <h3>Despesas</h3>
+                <div class="summary-amount">R$ 1.750,00</div>
+                <p>Este mês</p>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Transações Recentes</div>
+                    <button class="btn btn-primary" onclick="showModal('transaction-modal')">+ Nova</button>
+                </div>
+                <table class="transaction-list">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Categoria</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>15/04/2025</td>
+                            <td>Supermercado Extra</td>
+                            <td><span class="category-tag category-food">Alimentação</span></td>
+                            <td class="expense">- R$ 250,00</td>
+                        </tr>
+                        <tr>
+                            <td>14/04/2025</td>
+                            <td>Aluguel</td>
+                            <td><span class="category-tag category-housing">Moradia</span></td>
+                            <td class="expense">- R$ 1.200,00</td>
+                        </tr>
+                        <tr>
+                            <td>12/04/2025</td>
+                            <td>Uber</td>
+                            <td><span class="category-tag category-transport">Transporte</span></td>
+                            <td class="expense">- R$ 35,00</td>
+                        </tr>
+                        <tr>
+                            <td>10/04/2025</td>
+                            <td>Farmácia São Paulo</td>
+                            <td><span class="category-tag category-health">Saúde</span></td>
+                            <td class="expense">- R$ 85,00</td>
+                        </tr>
+                        <tr>
+                            <td>05/04/2025</td>
+                            <td>Salário</td>
+                            <td><span class="category-tag category-salary">Salário</span></td>
+                            <td class="income">+ R$ 5.000,00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="text-align: right; margin-top: 1rem;">
+                    <a href="#" style="color: var(--secondary-color);">Ver todas as transações →</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Orçamentos do Mês</div>
+                    <button class="btn btn-primary" onclick="showModal('budget-modal')">+ Novo</button>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Alimentação</span>
+                        <span>R$ 600,00 / R$ 800,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-safe" style="width: 75%"></div>
+                    </div>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Moradia</span>
+                        <span>R$ 1.200,00 / R$ 1.200,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-warning" style="width: 100%"></div>
+                    </div>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Transporte</span>
+                        <span>R$ 180,00 / R$ 300,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-safe" style="width: 60%"></div>
+                    </div>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Lazer</span>
+                        <span>R$ 350,00 / R$ 300,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-danger" style="width: 116%"></div>
+                    </div>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Saúde</span>
+                        <span>R$ 85,00 / R$ 500,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-safe" style="width: 17%"></div>
+                    </div>
+                </div>
+                
+                <div style="text-align: right; margin-top: 1rem;">
+                    <a href="#" style="color: var(--secondary-color);">Gerenciar orçamentos →</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Distribuição de Despesas</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Metas Financeiras</div>
+                    <button class="btn btn-primary" onclick="showModal('goal-modal')">+ Nova Meta</button>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Viagem Férias</span>
+                        <span>R$ 2.500,00 / R$ 5.000,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-safe" style="width: 50%"></div>
+                    </div>
+                    <small>Meta para: Dezembro/2025</small>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Fundo de Emergência</span>
+                        <span>R$ 4.200,00 / R$ 10.000,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-safe" style="width: 42%"></div>
+                    </div>
+                    <small>Meta contínua</small>
+                </div>
+                
+                <div class="budget-progress">
+                    <div class="budget-header">
+                        <span>Notebook Novo</span>
+                        <span>R$ 3.800,00 / R$ 4.000,00</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill progress-warning" style="width: 95%"></div>
+                    </div>
+                    <small>Meta para: Maio/2025</small>
+                </div>
+                
+                <div style="text-align: right; margin-top: 1rem;">
+                    <a href="#" style="color: var(--secondary-color);">Ver todas as metas →</a>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="fab" onclick="showModal('transaction-modal')">+</div>
+    
+    <!-- Modal para Adicionar Transação -->
+    <div id="transaction-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nova Transação</h2>
+                <span class="close-modal" onclick="hideModal('transaction-modal')">&times;</span>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" id="expense-tab" onclick="switchTab('expense-tab', 'income-tab')">Despesa</div>
+                <div class="tab" id="income-tab" onclick="switchTab('income-tab', 'expense-tab')">Receita</div>
+            </div>
+            
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label for="transaction-value">Valor</label>
+                    <input type="number" id="transaction-value" step="0.01" placeholder="0,00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-date">Data</label>
+                    <input type="date" id="transaction-date" value="2025-04-16">
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-category">Categoria</label>
+                    <select id="transaction-category">
+                        <option value="">Selecione uma categoria</option>
+                        <option value="food">Alimentação</option>
+                        <option value="housing">Moradia</option>
+                        <option value="transport">Transporte</option>
+                        <option value="health">Saúde</option>
+                        <option value="leisure">Lazer</option>
+                        <option value="education">Educação</option>
+                        <option value="other">Outros</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-description">Descrição</label>
+                    <input type="text" id="transaction-description" placeholder="Ex: Compras no supermercado">
+                </div>
+                
+                <div class="form-group">
+                    <label for="payment-method">Método de Pagamento</label>
+                    <select id="payment-method">
+                        <option value="">Selecione um método</option>
+                        <option value="cash">Dinheiro</option>
+                        <option value="credit">Cartão de Crédito</option>
+                        <option value="debit">Cartão de Débito</option>
+                        <option value="transfer">Transferência</option>
+                        <option value="pix">PIX</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="transaction-receipt">Comprovante (opcional)</label>
+                    <input type="file" id="transaction-receipt">
+                </div>
+                
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal('transaction-modal')">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTransaction()">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Adicionar Orçamento -->
+    <div id="budget-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Novo Orçamento</h2>
+                <span class="close-modal" onclick="hideModal('budget-modal')">&times;</span>
+            </div>
+            
+            <form id="budget-form">
+                <div class="form-group">
+                    <label for="budget-category">Categoria</label>
+                    <select id="budget-category">
+                        <option value="">Selecione uma categoria</option>
+                        <option value="food">Alimentação</option>
+                        <option value="housing">Moradia</option>
+                        <option value="transport">Transporte</option>
+                        <option value="health">Saúde</option>
+                        <option value="leisure">Lazer</option>
+                        <option value="education">Educação</option>
+                        <option value="other">Outros</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="budget-amount">Valor Planejado</label>
+                    <input type="number" id="budget-amount" step="0.01" placeholder="0,00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="budget-month">Mês</label>
+                    <select id="budget-month">
+                        <option value="4">Abril 2025</option>
+                        <option value="5">Maio 2025</option>
+                        <option value="6">Junho 2025</option>
+                    </select>
+                </div>
+                
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal('budget-modal')">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveBudget()">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Adicionar Meta -->
+    <div id="goal-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nova Meta Financeira</h2>
+                <span class="close-modal" onclick="hideModal('goal-modal')">&times;</span>
+            </div>
+            
+            <form id="goal-form">
+                <div class="form-group">
+                    <label for="goal-name">Nome da Meta</label>
+                    <input type="text" id="goal-name" placeholder="Ex: Viagem de férias">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goal-amount">Valor da Meta</label>
+                    <input type="number" id="goal-amount" step="0.01" placeholder="0,00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goal-current">Valor Atual (se já tem algum)</label>
+                    <input type="number" id="goal-current" step="0.01" placeholder="0,00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="goal-date">Data Final</label>
+                    <input type="date" id="goal-date">
+                </div>
+                
+                <div style="text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal('goal-modal')">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGoal()">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // URL do webhook
+        const WEBHOOK_URL = 'https://webhook.dev.solandox.com/webhook/appfinanceiro';
+        
+        // Funções para mostrar/esconder modais
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Função para alternar entre as abas de despesa e receita
+        function switchTab(activeTabId, inactiveTabId) {
+            document.getElementById(activeTabId).classList.add('active');
+            document.getElementById(inactiveTabId).classList.remove('active');
+        }
+        
+        // Função para salvar transação e enviar para o webhook
+        function saveTransaction() {
+            // Determinar o tipo de transação (receita ou despesa)
+            const transactionType = document.getElementById('expense-tab').classList.contains('active') ? 'expense' : 'income';
+            
+            // Coletar dados do formulário
+            const transactionData = {
+                type: transactionType,
+                value: document.getElementById('transaction-value').value,
+                date: document.getElementById('transaction-date').value,
+                category: document.getElementById('transaction-category').value,
+                description: document.getElementById('transaction-description').value,
+                paymentMethod: document.getElementById('payment-method').value,
+                // Não é possível enviar o arquivo através do webhook simples,
+                // então apenas registramos se foi anexado ou não
+                hasReceipt: document.getElementById('transaction-receipt').files.length > 0
+            };
+            
+            // Enviar dados para o webhook
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'new_transaction',
+                    data: transactionData
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Transação salva com sucesso!');
+                    hideModal('transaction-modal');
+                    // Limpar o formulário
+                    document.getElementById('transaction-form').reset();
+                } else {
+                    alert('Erro ao salvar a transação. Por favor, tente novamente.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao salvar a transação. Por favor, tente novamente.');
+            });
+        }
+        
+        // Função para salvar orçamento e enviar para o webhook
+        function saveBudget() {
+            // Coletar dados do formulário
+            const budgetData = {
+                category: document.getElementById('budget-category').value,
+                amount: document.getElementById('budget-amount').value,
+                month: document.getElementById('budget-month').value
+            };
+            
+            // Enviar dados para o webhook
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'new_budget',
+                    data: budgetData
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Orçamento salvo com sucesso!');
+                    hideModal('budget-modal');
+                    // Limpar o formulário
+                    document.getElementById('budget-form').reset();
+                } else {
+                    alert('Erro ao salvar o orçamento. Por favor, tente novamente.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao salvar o orçamento. Por favor, tente novamente.');
+            });
+        }
+        
+        // Função para salvar meta financeira e enviar para o webhook
+        function saveGoal() {
+            // Coletar dados do formulário
+            const goalData = {
+                name: document.getElementById('goal-name').value,
+                targetAmount: document.getElementById('goal-amount').value,
+                currentAmount: document.getElementById('goal-current').value,
+                targetDate: document.getElementById('goal-date').value
+            };
+            
+            //
+          // Enviar dados para o webhook
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'new_goal',
+                    data: goalData
+                })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Meta financeira salva com sucesso!');
+                    hideModal('goal-modal');
+                    // Limpar o formulário
+                    document.getElementById('goal-form').reset();
+                } else {
+                    alert('Erro ao salvar a meta financeira. Por favor, tente novamente.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao salvar a meta financeira. Por favor, tente novamente.');
+            });
+        }
+        
+        // Inicialização do gráfico de distribuição de despesas
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dados para o gráfico de pizza
+            const expenseData = {
+                labels: ['Moradia', 'Alimentação', 'Transporte', 'Saúde', 'Lazer', 'Outros'],
+                datasets: [{
+                    label: 'Despesas por Categoria',
+                    data: [1200, 600, 180, 85, 350, 150],
+                    backgroundColor: [
+                        '#9C27B0',  // Moradia
+                        '#FF9800',  // Alimentação
+                        '#03A9F4',  // Transporte
+                        '#E91E63',  // Saúde
+                        '#4CAF50',  // Lazer
+                        '#607D8B'   // Outros
+                    ],
+                    borderWidth: 0
+                }]
+            };
+            
+            // Configurações do gráfico
+            const expenseChartConfig = {
+                type: 'pie',
+                data: expenseData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: R$ ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            // Inicializar o gráfico
+            const expenseChartCtx = document.getElementById('expenseChart').getContext('2d');
+            const expenseChart = new Chart(expenseChartCtx, expenseChartConfig);
+            
+            // Adicionar event listeners para fechar modais ao clicar fora deles
+            window.addEventListener('click', function(event) {
+                const modals = document.getElementsByClassName('modal');
+                for (let i = 0; i < modals.length; i++) {
+                    if (event.target === modals[i]) {
+                        modals[i].style.display = 'none';
+                    }
+                }
+            });
+        });
+        
+        // Função para exportar dados financeiros
+        function exportData(format) {
+            // Simulação de exportação - na vida real, isso seria implementado no backend
+            alert(`Exportando dados no formato ${format}... Esta funcionalidade será implementada em breve.`);
+        }
+        
+        // Função para sincronizar com banco
+        function syncWithBank() {
+            // Simulação de sincronização com banco
+            const syncModal = document.createElement('div');
+            syncModal.className = 'modal';
+            syncModal.style.display = 'flex';
+            
+            syncModal.innerHTML = `
+                <div class="modal-content" style="text-align: center;">
+                    <h2>Sincronizando com seu banco</h2>
+                    <p>Por favor, aguarde enquanto estabelecemos uma conexão segura...</p>
+                    <div style="margin: 20px 0;">
+                        <div class="progress-bar">
+                            <div class="progress-fill progress-safe" style="width: 0%; transition: width 3s linear;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(syncModal);
+            
+            // Simulação da barra de progresso
+            setTimeout(() => {
+                syncModal.querySelector('.progress-fill').style.width = '100%';
+            }, 100);
+            
+            // Após "sincronização" completa
+            setTimeout(() => {
+                syncModal.querySelector('.modal-content').innerHTML = `
+                    <h2>Sincronização Completa!</h2>
+                    <p>Suas transações bancárias foram importadas com sucesso.</p>
+                    <button class="btn btn-primary" onclick="this.parentElement.parentElement.remove()">Fechar</button>
+                `;
+            }, 3000);
+        }
+        
+        // Função para notificações
+        function setupNotifications() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(function(result) {
+                    if (result === 'granted') {
+                        alert('Você receberá notificações sobre suas finanças!');
+                    }
+                });
+            }
+        }
+        
+        // Função para alternar tema claro/escuro
+        let darkModeEnabled = false;
+        function toggleDarkMode() {
+            darkModeEnabled = !darkModeEnabled;
+            
+            if (darkModeEnabled) {
+                document.documentElement.style.setProperty('--light-bg', '#121212');
+                document.documentElement.style.setProperty('--dark-text', '#f5f5f5');
+                document.body.classList.add('dark-mode');
+            } else {
+                document.documentElement.style.setProperty('--light-bg', '#f5f5f5');
+                document.documentElement.style.setProperty('--dark-text', '#333');
+                document.body.classList.remove('dark-mode');
+            }
+        }
+        
+        // Função para pesquisar transações
+        function searchTransactions(query) {
+            // Implementação básica de pesquisa
+            if (!query) return;
+            
+            alert(`Pesquisando por: ${query} - Esta funcionalidade será implementada em breve.`);
+        }
+    </script>
+
+    <!-- Footer -->
+    <footer style="background-color: var(--tertiary-color); color: var(--light-text); text-align: center; padding: 1rem; margin-top: 2rem;">
+        <div>
+            <h3>FinTrack - Seu app de finanças pessoais</h3>
+            <p>© 2025 FinTrack. Todos os direitos reservados.</p>
+        </div>
+        <div style="margin-top: 1rem;">
+            <button class="btn" style="background-color: #333; margin: 0 0.5rem;" onclick="toggleDarkMode()">Alternar Tema</button>
+            <button class="btn" style="background-color: #333; margin: 0 0.5rem;" onclick="exportData('csv')">Exportar CSV</button>
+            <button class="btn" style="background-color: #333; margin: 0 0.5rem;" onclick="syncWithBank()">Sincronizar Banco</button>
+            <button class="btn" style="background-color: #333; margin: 0 0.5rem;" onclick="setupNotifications()">Ativar Notificações</button>
+        </div>
+        <div style="margin-top: 1rem;">
+            <input type="text" placeholder="Pesquisar transações..." style="padding: 0.5rem; width: 300px; max-width: 100%;">
+            <button class="btn" style="background-color: var(--primary-color); margin-left: 0.5rem;" onclick="searchTransactions(this.previousElementSibling.value)">Buscar</button>
+        </div>
+    </footer>
+</body>
+</html>
