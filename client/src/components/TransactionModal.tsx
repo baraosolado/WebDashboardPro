@@ -148,7 +148,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
       onClose();
       
       // Enviar para webhook
-      sendToWebhook("create", data);
+      sendToWebhook("create", form.getValues());
     },
     onError: (error) => {
       toast({

@@ -274,6 +274,9 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Adicionar Fundos à Meta</DialogTitle>
+            <DialogDescription>
+              Informe o valor que deseja adicionar a esta meta.
+            </DialogDescription>
           </DialogHeader>
 
           {isLoadingGoal ? (
@@ -335,6 +338,9 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
           <DialogTitle>
             {goalId ? "Editar Meta" : "Nova Meta"}
           </DialogTitle>
+          <DialogDescription>
+            {goalId ? "Edite as informações da meta abaixo." : "Preencha o formulário para criar uma nova meta financeira."}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoadingGoal && goalId ? (

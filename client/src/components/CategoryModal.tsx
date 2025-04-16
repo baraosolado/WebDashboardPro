@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -223,6 +224,9 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
           <DialogTitle>
             {categoryId ? "Editar Categoria" : "Nova Categoria"}
           </DialogTitle>
+          <DialogDescription>
+            {categoryId ? "Edite as informações da categoria abaixo." : "Preencha o formulário para criar uma nova categoria."}
+          </DialogDescription>
         </DialogHeader>
 
         {isLoadingCategory && categoryId ? (
