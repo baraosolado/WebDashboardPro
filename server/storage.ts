@@ -1348,8 +1348,8 @@ export class SupabaseStorage implements IStorage {
         amount: data.amount,
         date: new Date(data.date),
         type: data.type as 'income' | 'expense',
-        categoryId: data.category_id,
-        notes: null // Definindo como null já que não existe na tabela
+        categoryId: data.category_id
+        // Removido campo notes pois não existe na tabela do Supabase
       };
     } catch (error) {
       console.error('Erro ao criar transação:', error);
@@ -1389,8 +1389,8 @@ export class SupabaseStorage implements IStorage {
         amount: data.amount,
         date: new Date(data.date),
         type: data.type as 'income' | 'expense',
-        categoryId: data.category_id,
-        notes: null // Definindo como null já que não existe na tabela
+        categoryId: data.category_id
+        // Removido campo notes pois não existe na tabela do Supabase
       };
     } catch (error) {
       console.error(`Erro ao atualizar transação ${id}:`, error);
