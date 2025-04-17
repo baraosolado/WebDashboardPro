@@ -46,9 +46,11 @@ export default function BudgetTracker() {
               return (
                 <div key={budget.id} className="mb-4">
                   <div className="flex justify-between mb-1">
-                    <div className="font-medium">{budget.category.name}</div>
+                    <div className="font-medium">
+                      {budget.category ? budget.category.name : 'Sem categoria'}
+                    </div>
                     <div className="text-sm">
-                      <span className="font-medium">{formatCurrency(budget.spent)}</span>
+                      <span className="font-medium">{formatCurrency(budget.spent || 0)}</span>
                       {' / '}
                       {formatCurrency(budget.amount)}
                       {' '}

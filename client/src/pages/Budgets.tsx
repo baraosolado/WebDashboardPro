@@ -115,14 +115,20 @@ export default function Budgets() {
                     <div className="flex flex-col">
                       <div className="flex justify-between items-baseline mb-2">
                         <span>
-                          <span 
-                            className={`inline-block px-2 py-1 rounded-full text-xs text-white font-semibold bg-${budget.category.color}-500`}
-                          >
-                            {budget.category.name}
-                          </span>
+                          {budget.category ? (
+                            <span 
+                              className={`inline-block px-2 py-1 rounded-full text-xs text-white font-semibold bg-${budget.category.color}-500`}
+                            >
+                              {budget.category.name}
+                            </span>
+                          ) : (
+                            <span className="inline-block px-2 py-1 rounded-full text-xs text-white font-semibold bg-gray-500">
+                              Sem categoria
+                            </span>
+                          )}
                         </span>
                         <span className="text-sm">
-                          {formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}
+                          {formatCurrency(budget.spent || 0)} / {formatCurrency(budget.amount)}
                         </span>
                       </div>
                       
