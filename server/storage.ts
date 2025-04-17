@@ -1228,8 +1228,8 @@ export class SupabaseStorage implements IStorage {
           {
             name: category.name,
             type: category.type,
-            color: category.color,
-            icon: category.icon || null
+            color: category.color
+            // Removido a coluna icon que não existe na tabela do Supabase
           }
         ])
         .select()
@@ -1246,7 +1246,7 @@ export class SupabaseStorage implements IStorage {
         name: data.name,
         type: data.type as 'income' | 'expense',
         color: data.color,
-        icon: data.icon || null
+        icon: null // Definindo como null já que não existe na tabela
       };
     } catch (err) {
       console.error('Erro ao criar categoria:', err);
@@ -1317,16 +1317,19 @@ export class SupabaseStorage implements IStorage {
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
     try {
+      console.log('Criando transação no Supabase:', transaction);
       const { data, error } = await supabase
         .from('transactions')
         .insert([
           {
             description: transaction.description,
             amount: transaction.amount,
-            date: transaction.date || new Date().toISOString().split('T')[0],
+            date: transaction.date instanceof Date ? 
+              transaction.date.toISOString().split('T')[0] : 
+              (transaction.date || new Date().toISOString().split('T')[0]),
             type: transaction.type,
-            category_id: transaction.categoryId,
-            notes: transaction.notes || null
+            category_id: transaction.categoryId
+            // Removido o campo notes pois não existe na tabela do Supabase
           }
         ])
         .select()
@@ -1337,6 +1340,7 @@ export class SupabaseStorage implements IStorage {
         throw new Error(`Erro ao criar transação: ${error.message}`);
       }
       
+      console.log('Transação criada com sucesso:', data);
       return {
         id: data.id,
         description: data.description,
@@ -1344,7 +1348,7 @@ export class SupabaseStorage implements IStorage {
         date: new Date(data.date),
         type: data.type as 'income' | 'expense',
         categoryId: data.category_id,
-        notes: data.notes
+        notes: null // Definindo como null já que não existe na tabela
       };
     } catch (error) {
       console.error('Erro ao criar transação:', error);
@@ -1354,6 +1358,7 @@ export class SupabaseStorage implements IStorage {
 
   async updateTransaction(id: number, transactionUpdate: Partial<InsertTransaction>): Promise<Transaction | undefined> {
     try {
+      console.log(`Atualizando transação ${id}:`, transactionUpdate);
       const updateData: any = {};
       
       if (transactionUpdate.description !== undefined) updateData.description = transactionUpdate.description;
@@ -1362,7 +1367,7 @@ export class SupabaseStorage implements IStorage {
         transactionUpdate.date.toISOString().split('T')[0] : transactionUpdate.date;
       if (transactionUpdate.type !== undefined) updateData.type = transactionUpdate.type;
       if (transactionUpdate.categoryId !== undefined) updateData.category_id = transactionUpdate.categoryId;
-      if (transactionUpdate.notes !== undefined) updateData.notes = transactionUpdate.notes;
+      // Removido a atualização do campo notes pois não existe na tabela do Supabase
       
       const { data, error } = await supabase
         .from('transactions')
@@ -1376,6 +1381,7 @@ export class SupabaseStorage implements IStorage {
         return undefined;
       }
       
+      console.log(`Transação ${id} atualizada com sucesso:`, data);
       return {
         id: data.id,
         description: data.description,
@@ -1383,7 +1389,7 @@ export class SupabaseStorage implements IStorage {
         date: new Date(data.date),
         type: data.type as 'income' | 'expense',
         categoryId: data.category_id,
-        notes: data.notes
+        notes: null // Definindo como null já que não existe na tabela
       };
     } catch (error) {
       console.error(`Erro ao atualizar transação ${id}:`, error);
