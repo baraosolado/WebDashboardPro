@@ -133,6 +133,14 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para criar transação
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
+      // Primeiro enviar para webhook antes de criar no banco
+      try {
+        await sendToWebhook("create", data);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      // Agora criar a transação no backend
       const response = await apiRequest("POST", "/api/transactions", data);
       return response.json();
     },
@@ -147,9 +155,6 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
         description: "A transação foi criada com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("create", form.getValues());
     },
     onError: (error) => {
       toast({
@@ -164,6 +169,14 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para atualizar transação
   const updateMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
+      // Primeiro enviar para webhook antes de atualizar no banco
+      try {
+        await sendToWebhook("update", data, transactionId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      // Agora atualizar a transação no backend
       const response = await apiRequest("PUT", `/api/transactions/${transactionId}`, data);
       return response.json();
     },
@@ -179,9 +192,6 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
         description: "A transação foi atualizada com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("update", form.getValues(), transactionId);
     },
     onError: (error) => {
       toast({
