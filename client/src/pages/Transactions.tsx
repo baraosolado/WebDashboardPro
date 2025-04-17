@@ -227,11 +227,19 @@ export default function Transactions() {
                       <td className="py-3 px-4">{formatDate(transaction.date)}</td>
                       <td className="py-3 px-4">{transaction.description}</td>
                       <td className="py-3 px-4">
-                        <span 
-                          className={`inline-block px-2 py-1 rounded-full text-xs text-white font-semibold bg-${transaction.category.color}-500`}
-                        >
-                          {transaction.category.name}
-                        </span>
+                        {transaction.category ? (
+                          <span 
+                            className={`inline-block px-2 py-1 rounded-full text-xs text-white font-semibold bg-${transaction.category.color}-500`}
+                          >
+                            {transaction.category.name}
+                          </span>
+                        ) : (
+                          <span 
+                            className="inline-block px-2 py-1 rounded-full text-xs text-gray-700 font-semibold bg-gray-200"
+                          >
+                            Sem categoria
+                          </span>
+                        )}
                       </td>
                       <td className={`py-3 px-4 text-right font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
                         {transaction.type === 'income' ? '+' : '-'} {formatCurrency(transaction.amount)}
