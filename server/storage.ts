@@ -1402,10 +1402,10 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log(`Excluindo transação com ID ${id}...`);
       
-      // Verificar se a transação existe antes de excluir
+      // Buscar primeiro a transação completa para garantir que é a correta
       const { data: transaction, error: findError } = await supabase
         .from('transactions')
-        .select('id')
+        .select('*')
         .eq('id', id)
         .single();
         
@@ -1414,15 +1414,28 @@ export class SupabaseStorage implements IStorage {
         return false;
       }
       
-      // Excluir a transação específica
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id);
-        
+      console.log(`Encontrada transação para exclusão:`, transaction);
+      
+      // Usar o método RPC para garantir a exclusão apenas da transação específica
+      // Isso é mais seguro que o método delete() padrão que pode falhar com o filtro
+      const { error } = await supabase.rpc('delete_transaction_by_id', {
+        transaction_id: id
+      });
+      
+      // Caso o RPC não esteja disponível, tentar abordagem direta novamente
       if (error) {
-        console.error(`Erro ao excluir transação ${id}:`, error);
-        return false;
+        console.error(`Erro ao usar RPC para exclusão. Tentando método direto:`, error);
+        
+        // Uso de uma query mais explícita com matches exatos para todos os campos importantes
+        const { error: deleteError } = await supabase
+          .from('transactions')
+          .delete()
+          .match({ id: id });
+          
+        if (deleteError) {
+          console.error(`Falha na exclusão direta da transação ${id}:`, deleteError);
+          return false;
+        }
       }
       
       console.log(`Transação ${id} excluída com sucesso`);

@@ -6,11 +6,21 @@ export function formatCurrency(value: number): string {
 }
 
 export function formatDate(date: Date | string | number): string {
+  if (!date) return '';
+  
+  // Garantir que a data é um objeto Date
   if (!(date instanceof Date)) {
     date = new Date(date);
   }
   
-  return date.toLocaleDateString('pt-BR');
+  // Ajustar o fuso horário para evitar problemas com datas ISO
+  const localDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  
+  return localDate.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
 }
 
 export function formatPercentage(value: number): string {
