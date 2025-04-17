@@ -69,7 +69,7 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
       name: "",
       type: "expense",
       color: "green",
-      icon: "",
+      // Campo icon removido pois não existe na tabela do Supabase
     },
   });
 
@@ -80,14 +80,14 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
         name: category.name,
         type: category.type,
         color: category.color,
-        icon: category.icon || "",
+        // Campo icon removido pois não existe na tabela do Supabase
       });
     } else {
       form.reset({
         name: "",
         type: "expense",
         color: "green",
-        icon: "",
+        // Campo icon removido pois não existe na tabela do Supabase
       });
     }
   }, [category, form]);
@@ -308,23 +308,7 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="icon"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ícone (opcional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Ex: shopping-cart" 
-                        {...field} 
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Campo de ícone removido pois não existe na tabela do Supabase */}
 
               <DialogFooter className="gap-2 sm:gap-0">
                 {categoryId && (

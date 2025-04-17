@@ -1223,7 +1223,7 @@ export class SupabaseStorage implements IStorage {
     try {
       console.log('Criando categoria no Supabase:', category);
       
-      // Remova explicitamente a propriedade icon do objeto antes de enviá-lo
+      // Extrair apenas os campos que existem na tabela
       const { name, type, color } = category;
       
       const { data, error } = await supabase
@@ -1242,8 +1242,8 @@ export class SupabaseStorage implements IStorage {
         id: data.id,
         name: data.name,
         type: data.type as 'income' | 'expense',
-        color: data.color,
-        icon: null // Definindo como null já que não existe na tabela
+        color: data.color
+        // Campo icon removido pois não existe na tabela do Supabase
       };
     } catch (err) {
       console.error('Erro ao criar categoria:', err);
