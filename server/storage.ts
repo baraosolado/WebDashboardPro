@@ -7,6 +7,7 @@ import {
   TransactionWithCategory, BudgetWithCategory,
   TransactionSummary, CategorySummary, MonthlyTrend
 } from "@shared/schema";
+import { supabase } from "./supabase";
 
 // Storage interface
 export interface IStorage {
@@ -1171,11 +1172,52 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getTransactions(): Promise<TransactionWithCategory[]> {
-    return [];
+    // Requisitar dados reais do Supabase
+    try {
+      const { data: transactionsData, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .order('date', { ascending: false });
+      
+      if (error) {
+        console.error("Erro ao buscar transações:", error);
+        return [];
+      }
+      
+      console.log("Transações do Supabase:", transactionsData);
+      return transactionsData || [];
+    } catch (error) {
+      console.error("Erro ao buscar transações:", error);
+      return [];
+    }
   }
 
   async getRecentTransactions(limit: number): Promise<TransactionWithCategory[]> {
-    return [];
+    // Requisitar dados recentes do Supabase
+    try {
+      const { data: transactionsData, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .order('date', { ascending: false })
+        .limit(limit);
+      
+      if (error) {
+        console.error("Erro ao buscar transações recentes:", error);
+        return [];
+      }
+      
+      console.log("Transações recentes do Supabase:", transactionsData);
+      return transactionsData || [];
+    } catch (error) {
+      console.error("Erro ao buscar transações recentes:", error);
+      return [];
+    }
   }
 
   async getTransaction(id: number): Promise<TransactionWithCategory | undefined> {
