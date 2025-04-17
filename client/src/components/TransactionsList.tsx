@@ -67,15 +67,23 @@ export default function TransactionsList() {
                       <td className="py-3 px-4">{formatDate(transaction.date)}</td>
                       <td className="py-3 px-4">{transaction.description}</td>
                       <td className="py-3 px-4">
-                        <span 
-                          className="inline-block px-3 py-1 rounded-full text-xs font-medium" 
-                          style={{
-                            backgroundColor: CATEGORY_COLORS[transaction.category.color]?.bg || '#9E9E9E',
-                            color: CATEGORY_COLORS[transaction.category.color]?.text || 'white'
-                          }}
-                        >
-                          {transaction.category.name}
-                        </span>
+                        {transaction.category ? (
+                          <span 
+                            className="inline-block px-3 py-1 rounded-full text-xs font-medium" 
+                            style={{
+                              backgroundColor: CATEGORY_COLORS[transaction.category.color]?.bg || '#9E9E9E',
+                              color: CATEGORY_COLORS[transaction.category.color]?.text || 'white'
+                            }}
+                          >
+                            {transaction.category.name}
+                          </span>
+                        ) : (
+                          <span 
+                            className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700"
+                          >
+                            Sem categoria
+                          </span>
+                        )}
                       </td>
                       <td className={`py-3 px-4 ${transaction.type === 'expense' ? 'text-[#f44336]' : 'text-[#4CAF50]'}`}>
                         {transaction.type === 'expense' ? '- ' : '+ '}
