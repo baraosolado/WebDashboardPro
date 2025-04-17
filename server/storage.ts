@@ -1400,6 +1400,21 @@ export class SupabaseStorage implements IStorage {
 
   async deleteTransaction(id: number): Promise<boolean> {
     try {
+      console.log(`Excluindo transação com ID ${id}...`);
+      
+      // Verificar se a transação existe antes de excluir
+      const { data: transaction, error: findError } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('id', id)
+        .single();
+        
+      if (findError || !transaction) {
+        console.error(`Transação com ID ${id} não encontrada:`, findError);
+        return false;
+      }
+      
+      // Excluir a transação específica
       const { error } = await supabase
         .from('transactions')
         .delete()
@@ -1410,6 +1425,7 @@ export class SupabaseStorage implements IStorage {
         return false;
       }
       
+      console.log(`Transação ${id} excluída com sucesso`);
       return true;
     } catch (error) {
       console.error(`Erro ao excluir transação ${id}:`, error);

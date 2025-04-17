@@ -149,17 +149,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   apiRouter.delete("/transactions/:id", async (req: Request, res: Response) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ message: "Invalid ID" });
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "ID inválido" });
+      }
+      
+      console.log(`Recebida solicitação para excluir transação ID ${id}`);
+      
+      // Verificar se a transação existe antes de tentar excluir
+      const transaction = await storage.getTransaction(id);
+      if (!transaction) {
+        console.log(`Transação ID ${id} não encontrada`);
+        return res.status(404).json({ message: "Transação não encontrada" });
+      }
+      
+      const success = await storage.deleteTransaction(id);
+      if (!success) {
+        console.log(`Falha ao excluir transação ID ${id}`);
+        return res.status(500).json({ message: "Erro ao excluir transação" });
+      }
+      
+      console.log(`Transação ID ${id} excluída com sucesso`);
+      res.status(204).end();
+    } catch (error) {
+      console.error("Erro ao excluir transação:", error);
+      res.status(500).json({ message: "Erro interno do servidor" });
     }
-    
-    const success = await storage.deleteTransaction(id);
-    if (!success) {
-      return res.status(404).json({ message: "Transaction not found" });
-    }
-    
-    res.status(204).end();
   });
   
   // Budgets endpoints
