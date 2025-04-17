@@ -1108,4 +1108,187 @@ export class DatabaseStorage implements IStorage {
 
 // Export a singleton instance of the storage
 // Use DatabaseStorage instead of MemStorage
-export const storage = new DatabaseStorage();
+export class SupabaseStorage implements IStorage {
+  sessionStore: any;
+  
+  constructor() {
+    // Usar sessionStore vazio por enquanto - será configurado no auth.ts
+    this.sessionStore = null;
+  }
+
+  // Implementações que retornam arrays vazios ou valores iniciais para limpar a aplicação
+  async getUser(id: number): Promise<User | undefined> {
+    return undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    // Para permitir login de teste com admin/123456
+    if (username === 'admin' && process.env.NODE_ENV !== 'production') {
+      return {
+        id: 1,
+        username: 'admin',
+        password: '$2a$10$bHMoAK.2CQp9p2mLJrfVOeQ7zOI/iK3XFyqr5RFnlzCSUu1hUlhJy', // hash de '123456'
+        email: 'admin@example.com',
+        createdAt: '2023-01-01T00:00:00Z'
+      };
+    }
+    return undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    return {
+      id: 1,
+      ...insertUser,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async getCategories(): Promise<Category[]> {
+    return [];
+  }
+
+  async getCategoriesByType(type: 'income' | 'expense'): Promise<Category[]> {
+    return [];
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    return undefined;
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    return {
+      id: 1,
+      ...category
+    };
+  }
+
+  async updateCategory(id: number, categoryUpdate: Partial<InsertCategory>): Promise<Category | undefined> {
+    return undefined;
+  }
+
+  async deleteCategory(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getTransactions(): Promise<TransactionWithCategory[]> {
+    return [];
+  }
+
+  async getRecentTransactions(limit: number): Promise<TransactionWithCategory[]> {
+    return [];
+  }
+
+  async getTransaction(id: number): Promise<TransactionWithCategory | undefined> {
+    return undefined;
+  }
+
+  async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
+    return {
+      id: 1,
+      ...transaction,
+      date: transaction.date || new Date(),
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async updateTransaction(id: number, transactionUpdate: Partial<InsertTransaction>): Promise<Transaction | undefined> {
+    return undefined;
+  }
+
+  async deleteTransaction(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getBudgets(): Promise<BudgetWithCategory[]> {
+    return [];
+  }
+
+  async getBudget(id: number): Promise<BudgetWithCategory | undefined> {
+    return undefined;
+  }
+
+  async createBudget(budget: InsertBudget): Promise<Budget> {
+    return {
+      id: 1,
+      ...budget,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async updateBudget(id: number, budgetUpdate: Partial<InsertBudget>): Promise<Budget | undefined> {
+    return undefined;
+  }
+
+  async deleteBudget(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getGoals(): Promise<Goal[]> {
+    return [];
+  }
+
+  async getGoal(id: number): Promise<Goal | undefined> {
+    return undefined;
+  }
+
+  async createGoal(goal: InsertGoal): Promise<Goal> {
+    return {
+      id: 1,
+      ...goal,
+      currentAmount: goal.currentAmount || 0,
+      targetDate: goal.targetDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  async updateGoal(id: number, goalUpdate: Partial<InsertGoal>): Promise<Goal | undefined> {
+    return undefined;
+  }
+
+  async addFundsToGoal(id: number, amount: number): Promise<Goal | undefined> {
+    return undefined;
+  }
+
+  async deleteGoal(id: number): Promise<boolean> {
+    return true;
+  }
+
+  async getTransactionSummary(): Promise<TransactionSummary> {
+    return {
+      income: 0,
+      expense: 0,
+      balance: 0
+    };
+  }
+
+  async getCategorySummary(type: 'income' | 'expense'): Promise<CategorySummary[]> {
+    return [];
+  }
+
+  async getMonthlyTrends(months: number): Promise<MonthlyTrend[]> {
+    const result: MonthlyTrend[] = [];
+    const now = new Date();
+    
+    for (let i = months - 1; i >= 0; i--) {
+      const currentDate = new Date(now);
+      currentDate.setMonth(now.getMonth() - i);
+      
+      const monthName = new Intl.DateTimeFormat('pt-BR', { month: 'short' }).format(currentDate);
+      
+      result.push({
+        month: monthName,
+        income: 0,
+        expense: 0
+      });
+    }
+    
+    return result;
+  }
+
+  async seedInitialData(): Promise<void> {
+    // Não precisamos semear dados iniciais
+    return;
+  }
+}
+
+export const storage = new SupabaseStorage();
