@@ -281,9 +281,16 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
     deleteMutation.isPending || 
     addFundsMutation.isPending;
 
+  // Função para gerenciar o fechamento do diálogo com segurança
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !isPending) {
+      onClose();
+    }
+  };
+
   if (isAddFunds && goalId) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
             <DialogTitle>Adicionar Fundos à Meta</DialogTitle>
@@ -328,7 +335,16 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
                   />
 
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={onClose}>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!isPending) {
+                          onClose();
+                        }
+                      }}
+                    >
                       Cancelar
                     </Button>
                     <Button type="submit" disabled={isPending}>
@@ -345,7 +361,7 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
