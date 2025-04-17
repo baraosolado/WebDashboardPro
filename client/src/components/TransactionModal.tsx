@@ -239,7 +239,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     },
   });
 
-  // Função para enviar dados para o webhook
+  // Função para enviar dados para o webhook (com flag markAsInternal)
   const sendToWebhook = async (
     action: "create" | "update" | "delete", 
     data: any, 
@@ -257,6 +257,8 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
           entityId: id || "new",
           data,
           timestamp: new Date().toISOString(),
+          // Flag para indicar que a entidade já está sendo salva no banco pelo sistema
+          fromApp: true
         }),
       });
     } catch (error) {
