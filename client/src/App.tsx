@@ -13,6 +13,7 @@ import Signup from "@/pages/Signup";
 import NotFoundPage from "@/pages/NotFoundPage";
 import Header from "@/components/Header";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 // Componente de rota protegida que verifica autenticação
 function PrivateRoute({ component: Component, ...rest }: any) {
@@ -60,7 +61,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppContent />
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
