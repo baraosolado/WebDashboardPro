@@ -1268,7 +1268,6 @@ export class SupabaseStorage implements IStorage {
           *,
           category:categories(*)
         `)
-        .eq('is_deleted', false)
         .order('date', { ascending: false });
       
       if (error) {
@@ -1293,7 +1292,6 @@ export class SupabaseStorage implements IStorage {
           *,
           category:categories(*)
         `)
-        .eq('is_deleted', false)
         .order('date', { ascending: false })
         .limit(limit);
       
@@ -1402,7 +1400,7 @@ export class SupabaseStorage implements IStorage {
 
   async deleteTransaction(id: number): Promise<boolean> {
     try {
-      console.log(`Marcando transação com ID ${id} como excluída (soft delete)...`);
+      console.log(`Excluindo permanentemente a transação com ID ${id}...`);
       
       // Buscar primeiro a transação para garantir que existe
       const { data: transaction, error: findError } = await supabase
@@ -1416,23 +1414,23 @@ export class SupabaseStorage implements IStorage {
         return false;
       }
       
-      console.log(`Encontrada transação para exclusão lógica:`, transaction);
+      console.log(`Encontrada transação para exclusão permanente:`, transaction);
       
-      // Marcar como excluída ao invés de remover fisicamente
+      // Excluir fisicamente a transação do banco de dados
       const { error } = await supabase
         .from('transactions')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', id);
       
       if (error) {
-        console.error(`Erro ao marcar transação ${id} como excluída:`, error);
+        console.error(`Erro ao excluir permanentemente a transação ${id}:`, error);
         return false;
       }
       
-      console.log(`Transação ${id} marcada como excluída com sucesso`);
+      console.log(`Transação ${id} excluída permanentemente com sucesso`);
       return true;
     } catch (error) {
-      console.error(`Erro ao marcar transação ${id} como excluída:`, error);
+      console.error(`Erro ao excluir permanentemente a transação ${id}:`, error);
       return false;
     }
   }
@@ -1445,7 +1443,6 @@ export class SupabaseStorage implements IStorage {
           *,
           category:categories(*)
         `)
-        .eq('is_deleted', false)
         .order('id', { ascending: false });
       
       if (error) {
@@ -1555,7 +1552,7 @@ export class SupabaseStorage implements IStorage {
 
   async deleteBudget(id: number): Promise<boolean> {
     try {
-      console.log(`Marcando orçamento com ID ${id} como excluído (soft delete)...`);
+      console.log(`Excluindo permanentemente o orçamento com ID ${id}...`);
       
       // Buscar primeiro o orçamento para garantir que existe
       const { data: budget, error: findError } = await supabase
@@ -1569,23 +1566,23 @@ export class SupabaseStorage implements IStorage {
         return false;
       }
       
-      console.log(`Encontrado orçamento para exclusão lógica:`, budget);
+      console.log(`Encontrado orçamento para exclusão permanente:`, budget);
       
-      // Marcar como excluído ao invés de remover fisicamente
+      // Excluir fisicamente o orçamento do banco de dados
       const { error } = await supabase
         .from('budgets')
-        .update({ is_deleted: true })
+        .delete()
         .eq('id', id);
       
       if (error) {
-        console.error(`Erro ao marcar orçamento ${id} como excluído:`, error);
+        console.error(`Erro ao excluir permanentemente o orçamento ${id}:`, error);
         return false;
       }
       
-      console.log(`Orçamento ${id} marcado como excluído com sucesso`);
+      console.log(`Orçamento ${id} excluído permanentemente com sucesso`);
       return true;
     } catch (error) {
-      console.error(`Erro ao marcar orçamento ${id} como excluído:`, error);
+      console.error(`Erro ao excluir permanentemente o orçamento ${id}:`, error);
       return false;
     }
   }
@@ -1624,8 +1621,7 @@ export class SupabaseStorage implements IStorage {
     try {
       const { data: transactions, error } = await supabase
         .from('transactions')
-        .select('*')
-        .eq('is_deleted', false);
+        .select('*');
       
       if (error) {
         console.error('Erro ao buscar transações para resumo:', error);
