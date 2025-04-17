@@ -1268,6 +1268,7 @@ export class SupabaseStorage implements IStorage {
           *,
           category:categories(*)
         `)
+        .eq('is_deleted', false)
         .order('date', { ascending: false });
       
       if (error) {
@@ -1292,6 +1293,7 @@ export class SupabaseStorage implements IStorage {
           *,
           category:categories(*)
         `)
+        .eq('is_deleted', false)
         .order('date', { ascending: false })
         .limit(limit);
       
@@ -1400,9 +1402,9 @@ export class SupabaseStorage implements IStorage {
 
   async deleteTransaction(id: number): Promise<boolean> {
     try {
-      console.log(`Excluindo transação com ID ${id}...`);
+      console.log(`Marcando transação com ID ${id} como excluída (soft delete)...`);
       
-      // Buscar primeiro a transação completa para garantir que é a correta
+      // Buscar primeiro a transação para garantir que existe
       const { data: transaction, error: findError } = await supabase
         .from('transactions')
         .select('*')
@@ -1414,34 +1416,23 @@ export class SupabaseStorage implements IStorage {
         return false;
       }
       
-      console.log(`Encontrada transação para exclusão:`, transaction);
+      console.log(`Encontrada transação para exclusão lógica:`, transaction);
       
-      // Usar o método RPC para garantir a exclusão apenas da transação específica
-      // Isso é mais seguro que o método delete() padrão que pode falhar com o filtro
-      const { error } = await supabase.rpc('delete_transaction_by_id', {
-        transaction_id: id
-      });
+      // Marcar como excluída ao invés de remover fisicamente
+      const { error } = await supabase
+        .from('transactions')
+        .update({ is_deleted: true })
+        .eq('id', id);
       
-      // Caso o RPC não esteja disponível, tentar abordagem direta novamente
       if (error) {
-        console.error(`Erro ao usar RPC para exclusão. Tentando método direto:`, error);
-        
-        // Uso de uma query mais explícita com matches exatos para todos os campos importantes
-        const { error: deleteError } = await supabase
-          .from('transactions')
-          .delete()
-          .match({ id: id });
-          
-        if (deleteError) {
-          console.error(`Falha na exclusão direta da transação ${id}:`, deleteError);
-          return false;
-        }
+        console.error(`Erro ao marcar transação ${id} como excluída:`, error);
+        return false;
       }
       
-      console.log(`Transação ${id} excluída com sucesso`);
+      console.log(`Transação ${id} marcada como excluída com sucesso`);
       return true;
     } catch (error) {
-      console.error(`Erro ao excluir transação ${id}:`, error);
+      console.error(`Erro ao marcar transação ${id} como excluída:`, error);
       return false;
     }
   }
@@ -1454,6 +1445,7 @@ export class SupabaseStorage implements IStorage {
           *,
           category:categories(*)
         `)
+        .eq('is_deleted', false)
         .order('id', { ascending: false });
       
       if (error) {
@@ -1563,19 +1555,37 @@ export class SupabaseStorage implements IStorage {
 
   async deleteBudget(id: number): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('budgets')
-        .delete()
-        .eq('id', id);
+      console.log(`Marcando orçamento com ID ${id} como excluído (soft delete)...`);
       
-      if (error) {
-        console.error(`Erro ao excluir orçamento ${id}:`, error);
+      // Buscar primeiro o orçamento para garantir que existe
+      const { data: budget, error: findError } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (findError || !budget) {
+        console.error(`Orçamento com ID ${id} não encontrado:`, findError);
         return false;
       }
       
+      console.log(`Encontrado orçamento para exclusão lógica:`, budget);
+      
+      // Marcar como excluído ao invés de remover fisicamente
+      const { error } = await supabase
+        .from('budgets')
+        .update({ is_deleted: true })
+        .eq('id', id);
+      
+      if (error) {
+        console.error(`Erro ao marcar orçamento ${id} como excluído:`, error);
+        return false;
+      }
+      
+      console.log(`Orçamento ${id} marcado como excluído com sucesso`);
       return true;
     } catch (error) {
-      console.error(`Erro ao excluir orçamento ${id}:`, error);
+      console.error(`Erro ao marcar orçamento ${id} como excluído:`, error);
       return false;
     }
   }
@@ -1614,7 +1624,8 @@ export class SupabaseStorage implements IStorage {
     try {
       const { data: transactions, error } = await supabase
         .from('transactions')
-        .select('*');
+        .select('*')
+        .eq('is_deleted', false);
       
       if (error) {
         console.error('Erro ao buscar transações para resumo:', error);
