@@ -1222,16 +1222,13 @@ export class SupabaseStorage implements IStorage {
   async createCategory(category: InsertCategory): Promise<Category> {
     try {
       console.log('Criando categoria no Supabase:', category);
+      
+      // Remova explicitamente a propriedade icon do objeto antes de enviá-lo
+      const { name, type, color } = category;
+      
       const { data, error } = await supabase
         .from('categories')
-        .insert([
-          {
-            name: category.name,
-            type: category.type,
-            color: category.color
-            // Removido a coluna icon que não existe na tabela do Supabase
-          }
-        ])
+        .insert([{ name, type, color }])
         .select()
         .single();
       
@@ -1318,20 +1315,24 @@ export class SupabaseStorage implements IStorage {
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
     try {
       console.log('Criando transação no Supabase:', transaction);
+      
+      // Extrair apenas os campos que existem na tabela do Supabase
+      const { description, amount, type, categoryId } = transaction;
+      
+      // Formatar a data corretamente
+      const date = transaction.date instanceof Date ? 
+        transaction.date.toISOString().split('T')[0] : 
+        (transaction.date || new Date().toISOString().split('T')[0]);
+      
       const { data, error } = await supabase
         .from('transactions')
-        .insert([
-          {
-            description: transaction.description,
-            amount: transaction.amount,
-            date: transaction.date instanceof Date ? 
-              transaction.date.toISOString().split('T')[0] : 
-              (transaction.date || new Date().toISOString().split('T')[0]),
-            type: transaction.type,
-            category_id: transaction.categoryId
-            // Removido o campo notes pois não existe na tabela do Supabase
-          }
-        ])
+        .insert([{
+          description,
+          amount,
+          date,
+          type,
+          category_id: categoryId
+        }])
         .select()
         .single();
         
@@ -1417,27 +1418,137 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getBudgets(): Promise<BudgetWithCategory[]> {
-    return [];
+    try {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .order('id', { ascending: false });
+      
+      if (error) {
+        console.error('Erro ao buscar orçamentos:', error);
+        return [];
+      }
+      
+      console.log('Orçamentos do Supabase:', data);
+      return data || [];
+    } catch (error) {
+      console.error('Erro ao buscar orçamentos:', error);
+      return [];
+    }
   }
 
   async getBudget(id: number): Promise<BudgetWithCategory | undefined> {
-    return undefined;
+    try {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select(`
+          *,
+          category:categories(*)
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error(`Erro ao buscar orçamento ${id}:`, error);
+        return undefined;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`Erro ao buscar orçamento ${id}:`, error);
+      return undefined;
+    }
   }
 
   async createBudget(budget: InsertBudget): Promise<Budget> {
-    return {
-      id: 1,
-      ...budget,
-      createdAt: new Date().toISOString()
-    };
+    try {
+      console.log('Criando orçamento no Supabase:', budget);
+      const { amount, categoryId, period } = budget;
+      
+      const { data, error } = await supabase
+        .from('budgets')
+        .insert([{
+          amount,
+          category_id: categoryId,
+          period
+        }])
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Erro ao criar orçamento:', error);
+        throw new Error(`Erro ao criar orçamento: ${error.message}`);
+      }
+      
+      console.log('Orçamento criado com sucesso:', data);
+      return {
+        id: data.id,
+        amount: data.amount,
+        categoryId: data.category_id,
+        period: data.period,
+        createdAt: data.created_at
+      };
+    } catch (error) {
+      console.error('Erro ao criar orçamento:', error);
+      throw error;
+    }
   }
 
   async updateBudget(id: number, budgetUpdate: Partial<InsertBudget>): Promise<Budget | undefined> {
-    return undefined;
+    try {
+      console.log(`Atualizando orçamento ${id}:`, budgetUpdate);
+      const updateData: any = {};
+      
+      if (budgetUpdate.amount !== undefined) updateData.amount = budgetUpdate.amount;
+      if (budgetUpdate.categoryId !== undefined) updateData.category_id = budgetUpdate.categoryId;
+      if (budgetUpdate.period !== undefined) updateData.period = budgetUpdate.period;
+      
+      const { data, error } = await supabase
+        .from('budgets')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error(`Erro ao atualizar orçamento ${id}:`, error);
+        return undefined;
+      }
+      
+      console.log(`Orçamento ${id} atualizado com sucesso:`, data);
+      return {
+        id: data.id,
+        amount: data.amount,
+        categoryId: data.category_id,
+        period: data.period,
+        createdAt: data.created_at
+      };
+    } catch (error) {
+      console.error(`Erro ao atualizar orçamento ${id}:`, error);
+      return undefined;
+    }
   }
 
   async deleteBudget(id: number): Promise<boolean> {
-    return true;
+    try {
+      const { error } = await supabase
+        .from('budgets')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error(`Erro ao excluir orçamento ${id}:`, error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Erro ao excluir orçamento ${id}:`, error);
+      return false;
+    }
   }
 
   async getGoals(): Promise<Goal[]> {
