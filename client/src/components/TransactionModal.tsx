@@ -206,6 +206,14 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para excluir transação
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      // Primeiro enviar para webhook antes de excluir do banco
+      try {
+        await sendToWebhook("delete", form.getValues(), transactionId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      // Agora excluir a transação do backend
       const response = await apiRequest("DELETE", `/api/transactions/${transactionId}`);
       return response;
     },
@@ -220,9 +228,6 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
         description: "A transação foi excluída com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("delete", form.getValues(), transactionId);
     },
     onError: (error) => {
       toast({
