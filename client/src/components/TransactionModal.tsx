@@ -267,8 +267,15 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
 
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
+  // Modificado para prevenir duplicações: onOpenChange agora usa uma função que verifica se não está em processamento
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !isPending) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
@@ -405,7 +412,16 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
                   </Button>
                 )}
                 <div className="flex gap-2 ml-auto">
-                  <Button type="button" variant="outline" onClick={onClose}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isPending) {
+                        onClose();
+                      }
+                    }}
+                  >
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isPending}>

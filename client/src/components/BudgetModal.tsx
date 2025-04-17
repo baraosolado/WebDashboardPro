@@ -217,8 +217,15 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
 
   const isPending = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
+  // Modificado para prevenir duplicações: onOpenChange agora usa uma função que verifica se não está em processamento
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !isPending) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
