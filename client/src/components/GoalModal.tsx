@@ -479,7 +479,16 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
                   </Button>
                 )}
                 <div className="flex gap-2 ml-auto">
-                  <Button type="button" variant="outline" onClick={onClose}>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isPending) {
+                        onClose();
+                      }
+                    }}
+                  >
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={isPending}>
