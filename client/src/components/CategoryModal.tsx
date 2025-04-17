@@ -39,7 +39,7 @@ const categorySchema = z.object({
     "green", "blue", "purple", "orange", "pink", 
     "teal", "red", "yellow", "indigo", "gray"
   ]),
-  icon: z.string().nullable().optional(),
+  // Campo icon removido pois não existe na tabela do Supabase
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;

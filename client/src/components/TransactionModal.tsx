@@ -40,7 +40,7 @@ const transactionSchema = z.object({
   amount: z.coerce.number().positive("Valor deve ser positivo"),
   categoryId: z.coerce.number(),
   date: z.string(),
-  notes: z.string().nullable().optional(),
+  // Removido campo notes que não existe na tabela do Supabase
 });
 
 type TransactionFormValues = z.infer<typeof transactionSchema>;
@@ -87,7 +87,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
       amount: 0,
       categoryId: 0,
       date: formatDateForInput(new Date()),
-      notes: "",
+      // Removido campo notes pois não existe na tabela do Supabase
     },
   });
 
@@ -104,7 +104,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
           amount: transaction.amount,
           categoryId: transaction.categoryId,
           date: formattedDate,
-          notes: transaction.notes || "",
+          // Removido campo notes pois não existe na tabela do Supabase
         });
       } catch (error) {
         console.error("Erro ao formatar data da transação:", error);
@@ -115,7 +115,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
           amount: transaction.amount,
           categoryId: transaction.categoryId,
           date: formatDateForInput(new Date()),
-          notes: transaction.notes || "",
+          // Removido campo notes pois não existe na tabela do Supabase
         });
       }
     } else {
@@ -125,7 +125,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
         amount: 0,
         categoryId: 0,
         date: formatDateForInput(new Date()),
-        notes: "",
+        // Removido campo notes pois não existe na tabela do Supabase
       });
     }
   }, [transaction, form]);
@@ -391,23 +391,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Adicione detalhes adicionais (opcional)" 
-                        {...field} 
-                        value={field.value || ""}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Campo de observações removido pois não existe na tabela do Supabase */}
 
               <DialogFooter className="gap-2 sm:gap-0">
                 {transactionId && (
