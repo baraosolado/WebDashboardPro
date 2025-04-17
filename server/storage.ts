@@ -1145,22 +1145,113 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getCategories(): Promise<Category[]> {
-    return [];
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (error) {
+        console.error('Erro ao buscar categorias:', error);
+        return [];
+      }
+      
+      return data.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        type: cat.type as 'income' | 'expense',
+        color: cat.color,
+        icon: cat.icon || null
+      }));
+    } catch (err) {
+      console.error('Erro ao buscar categorias:', err);
+      return [];
+    }
   }
 
   async getCategoriesByType(type: 'income' | 'expense'): Promise<Category[]> {
-    return [];
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('type', type);
+      
+      if (error) {
+        console.error(`Erro ao buscar categorias do tipo ${type}:`, error);
+        return [];
+      }
+      
+      return data.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        type: cat.type as 'income' | 'expense',
+        color: cat.color,
+        icon: cat.icon || null
+      }));
+    } catch (err) {
+      console.error(`Erro ao buscar categorias do tipo ${type}:`, err);
+      return [];
+    }
   }
 
   async getCategory(id: number): Promise<Category | undefined> {
-    return undefined;
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (error || !data) {
+        console.error(`Erro ao buscar categoria ${id}:`, error);
+        return undefined;
+      }
+      
+      return {
+        id: data.id,
+        name: data.name,
+        type: data.type as 'income' | 'expense',
+        color: data.color,
+        icon: data.icon || null
+      };
+    } catch (err) {
+      console.error(`Erro ao buscar categoria ${id}:`, err);
+      return undefined;
+    }
   }
 
   async createCategory(category: InsertCategory): Promise<Category> {
-    return {
-      id: 1,
-      ...category
-    };
+    try {
+      console.log('Criando categoria no Supabase:', category);
+      const { data, error } = await supabase
+        .from('categories')
+        .insert([
+          {
+            name: category.name,
+            type: category.type,
+            color: category.color,
+            icon: category.icon || null
+          }
+        ])
+        .select()
+        .single();
+      
+      if (error || !data) {
+        console.error('Erro ao criar categoria:', error);
+        throw new Error(`Erro ao criar categoria: ${error?.message}`);
+      }
+      
+      console.log('Categoria criada com sucesso:', data);
+      return {
+        id: data.id,
+        name: data.name,
+        type: data.type as 'income' | 'expense',
+        color: data.color,
+        icon: data.icon || null
+      };
+    } catch (err) {
+      console.error('Erro ao criar categoria:', err);
+      throw err;
+    }
   }
 
   async updateCategory(id: number, categoryUpdate: Partial<InsertCategory>): Promise<Category | undefined> {
@@ -1225,20 +1316,98 @@ export class SupabaseStorage implements IStorage {
   }
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
-    return {
-      id: 1,
-      ...transaction,
-      date: transaction.date || new Date(),
-      createdAt: new Date().toISOString()
-    };
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([
+          {
+            description: transaction.description,
+            amount: transaction.amount,
+            date: transaction.date || new Date().toISOString().split('T')[0],
+            type: transaction.type,
+            category_id: transaction.categoryId,
+            notes: transaction.notes || null
+          }
+        ])
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Erro ao criar transação:', error);
+        throw new Error(`Erro ao criar transação: ${error.message}`);
+      }
+      
+      return {
+        id: data.id,
+        description: data.description,
+        amount: data.amount,
+        date: new Date(data.date),
+        type: data.type as 'income' | 'expense',
+        categoryId: data.category_id,
+        notes: data.notes
+      };
+    } catch (error) {
+      console.error('Erro ao criar transação:', error);
+      throw error;
+    }
   }
 
   async updateTransaction(id: number, transactionUpdate: Partial<InsertTransaction>): Promise<Transaction | undefined> {
-    return undefined;
+    try {
+      const updateData: any = {};
+      
+      if (transactionUpdate.description !== undefined) updateData.description = transactionUpdate.description;
+      if (transactionUpdate.amount !== undefined) updateData.amount = transactionUpdate.amount;
+      if (transactionUpdate.date !== undefined) updateData.date = transactionUpdate.date instanceof Date ? 
+        transactionUpdate.date.toISOString().split('T')[0] : transactionUpdate.date;
+      if (transactionUpdate.type !== undefined) updateData.type = transactionUpdate.type;
+      if (transactionUpdate.categoryId !== undefined) updateData.category_id = transactionUpdate.categoryId;
+      if (transactionUpdate.notes !== undefined) updateData.notes = transactionUpdate.notes;
+      
+      const { data, error } = await supabase
+        .from('transactions')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) {
+        console.error(`Erro ao atualizar transação ${id}:`, error);
+        return undefined;
+      }
+      
+      return {
+        id: data.id,
+        description: data.description,
+        amount: data.amount,
+        date: new Date(data.date),
+        type: data.type as 'income' | 'expense',
+        categoryId: data.category_id,
+        notes: data.notes
+      };
+    } catch (error) {
+      console.error(`Erro ao atualizar transação ${id}:`, error);
+      return undefined;
+    }
   }
 
   async deleteTransaction(id: number): Promise<boolean> {
-    return true;
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        console.error(`Erro ao excluir transação ${id}:`, error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`Erro ao excluir transação ${id}:`, error);
+      return false;
+    }
   }
 
   async getBudgets(): Promise<BudgetWithCategory[]> {
