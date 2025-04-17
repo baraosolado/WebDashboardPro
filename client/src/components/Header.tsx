@@ -5,21 +5,36 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { LogOut, Menu, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Header() {
   const [location] = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { username, logout } = useAuth();
+  const { themeConfig } = useTheme();
 
   const handleLogout = () => {
     logout();
   };
 
+  const headerStyle = {
+    backgroundColor: themeConfig.primaryColor,
+  };
+
   return (
-    <header className="bg-[#4CAF50] text-white p-4 shadow-md fixed w-full z-50">
+    <header className="text-white p-4 shadow-md fixed w-full z-50" style={headerStyle}>
       <div className="flex justify-between items-center max-w-7xl mx-auto">
         <Link href="/">
-          <span className="text-2xl font-bold">FinTrack</span>
+          <div className="flex items-center">
+            {themeConfig.logoUrl && (
+              <img 
+                src={themeConfig.logoUrl} 
+                alt={themeConfig.appName} 
+                className="h-8 w-auto mr-2"
+              />
+            )}
+            <span className="text-2xl font-bold">{themeConfig.appName}</span>
+          </div>
         </Link>
         
         {/* Desktop Navigation */}

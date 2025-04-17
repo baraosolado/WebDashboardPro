@@ -12,6 +12,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import NotFoundPage from "@/pages/NotFoundPage";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
@@ -49,9 +50,12 @@ function AppContent() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className={`bg-[#f5f5f5] min-h-screen font-['Segoe_UI',sans-serif] ${isAuthenticated ? 'logged-in' : ''}`}>
+    <div className={`bg-[#f5f5f5] min-h-screen font-['Segoe_UI',sans-serif] flex flex-col ${isAuthenticated ? 'logged-in' : ''}`}>
       {isAuthenticated && <Header />}
-      <Router />
+      <div className="flex-grow">
+        <Router />
+      </div>
+      {isAuthenticated && <Footer />}
       <Toaster />
     </div>
   );

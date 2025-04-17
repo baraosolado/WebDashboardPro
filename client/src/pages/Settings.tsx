@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Category } from "@shared/schema";
 import CategoryModal from "@/components/CategoryModal";
+import AppearanceSettings from "@/components/AppearanceSettings";
 
 // Schema para validação do perfil
 const profileSchema = z.object({
@@ -33,7 +34,7 @@ export default function Settings() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
   // Buscar categorias
-  const { data: categories, isLoading } = useQuery({
+  const { data: categories, isLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
@@ -318,10 +319,10 @@ export default function Settings() {
           )}
         </div>
 
-        {/* Outras Configurações */}
+        {/* Personalização do Aplicativo */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-green-600 mb-4 pb-2 border-b">Outras Configurações</h2>
-          <p className="text-gray-500">Opções como moeda padrão, notificações, etc., podem ser adicionadas aqui.</p>
+          <h2 className="text-lg font-semibold text-green-600 mb-4 pb-2 border-b">Personalização do Aplicativo</h2>
+          <AppearanceSettings />
         </div>
       </div>
       
