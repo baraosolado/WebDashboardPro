@@ -1296,11 +1296,41 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getTransactionSummary(): Promise<TransactionSummary> {
-    return {
-      income: 0,
-      expense: 0,
-      balance: 0
-    };
+    try {
+      const { data: transactions, error } = await supabase
+        .from('transactions')
+        .select('*');
+      
+      if (error) {
+        console.error('Erro ao buscar transações para resumo:', error);
+        return {
+          income: 0,
+          expense: 0,
+          balance: 0
+        };
+      }
+      
+      const income = transactions
+        .filter(tx => tx.type === 'income')
+        .reduce((sum, tx) => sum + tx.amount, 0);
+      
+      const expense = transactions
+        .filter(tx => tx.type === 'expense')
+        .reduce((sum, tx) => sum + tx.amount, 0);
+      
+      return {
+        income,
+        expense,
+        balance: income - expense
+      };
+    } catch (error) {
+      console.error('Erro ao calcular resumo de transações:', error);
+      return {
+        income: 0,
+        expense: 0,
+        balance: 0
+      };
+    }
   }
 
   async getCategorySummary(type: 'income' | 'expense'): Promise<CategorySummary[]> {
