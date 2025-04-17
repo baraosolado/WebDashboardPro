@@ -20,7 +20,7 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   color: categoryColorEnum("color").notNull(),
-  icon: text("icon"),
+  // Campo icon removido pois não existe na tabela do Supabase
   type: transactionTypeEnum("type").notNull(),
 });
 
@@ -31,7 +31,7 @@ export const transactions = pgTable("transactions", {
   date: timestamp("date").notNull().defaultNow(),
   type: transactionTypeEnum("type").notNull(),
   categoryId: integer("category_id").notNull().references(() => categories.id),
-  notes: text("notes"),
+  // Campo notes removido pois não existe na tabela do Supabase
 });
 
 export const budgets = pgTable("budgets", {
@@ -80,9 +80,9 @@ export const insertCategorySchema = createInsertSchema(categories)
   .pick({
     name: true,
     color: true,
-    icon: true,
     type: true,
   });  // Não precisamos de coerção para categorias, todos são strings ou enums
+  // Removido campo icon pois não existe na tabela do Supabase
 
 export const insertTransactionSchema = createInsertSchema(transactions)
   .pick({
@@ -91,7 +91,7 @@ export const insertTransactionSchema = createInsertSchema(transactions)
     date: true,
     type: true,
     categoryId: true,
-    notes: true,
+    // Removido campo notes pois não existe na tabela do Supabase
   })
   .extend({
     amount: z.coerce.number().positive(),
