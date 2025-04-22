@@ -8,7 +8,6 @@ import {
   insertGoalSchema
 } from "@shared/schema";
 import { z } from "zod";
-import downloadRouter from "./download";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data
@@ -523,23 +522,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount API router
   app.use("/api", apiRouter);
-  
-  // Mount download router
-  app.use(downloadRouter);
-  
-  // Rota para download do plugin WordPress
-  app.get("/download-wordpress-plugin", (_req, res) => {
-    const pluginPath = './fintrack-wordpress-plugin.zip';
-    res.download(pluginPath, 'fintrack-wordpress-plugin.zip', (err) => {
-      if (err) {
-        console.error("Erro ao baixar o plugin WordPress:", err);
-        // Verificar se o cabeçalho já foi enviado
-        if (!res.headersSent) {
-          res.status(500).send("Erro ao baixar o plugin WordPress");
-        }
-      }
-    });
-  });
 
   const httpServer = createServer(app);
   return httpServer;
