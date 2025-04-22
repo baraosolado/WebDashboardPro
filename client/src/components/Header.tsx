@@ -7,6 +7,7 @@ import { LogOut, Menu, User, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
+import WordPressDownloadButton from "./WordPressDownloadButton";
 
 export default function Header() {
   const [location] = useLocation();
@@ -114,6 +115,7 @@ export default function Header() {
               <Download className="w-4 h-4 mr-1" />
               <span>Baixar</span>
             </Button>
+            <WordPressDownloadButton />
             <Button 
               variant="ghost" 
               size="sm" 
