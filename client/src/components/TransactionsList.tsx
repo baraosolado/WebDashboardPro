@@ -63,7 +63,14 @@ export default function TransactionsList() {
               <tbody>
                 {transactions && transactions.length > 0 ? (
                   transactions.map((transaction) => (
-                    <tr key={transaction.id} className="border-b hover:bg-gray-50">
+                    <tr 
+                      key={transaction.id} 
+                      className="border-b hover:bg-gray-50 cursor-pointer" 
+                      onClick={() => {
+                        setCurrentTransaction(transaction);
+                        setShowTransactionModal(true);
+                      }}
+                    >
                       <td className="py-3 px-4">{formatDate(transaction.date)}</td>
                       <td className="py-3 px-4">{transaction.description}</td>
                       <td className="py-3 px-4">

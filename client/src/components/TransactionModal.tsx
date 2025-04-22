@@ -23,6 +23,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
+// Interface para a categoria
+interface Category {
+  id: number;
+  name: string;
+  type: string;
+  color: string;
+  created_at?: string;
+}
+
+// Interface para transação com categoria
+interface TransactionWithCategory {
+  id: number;
+  description: string;
+  amount: number;
+  type: string;
+  date: string;
+  category_id: number | null;
+  user_id?: number | null;
+  created_at?: string;
+  category: Category | null;
+}
 import {
   Select,
   SelectContent,
@@ -49,9 +71,10 @@ interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   transactionId?: number | null;
+  transaction?: TransactionWithCategory | null;
 }
 
-export default function TransactionModal({ isOpen, onClose, transactionId }: TransactionModalProps) {
+export default function TransactionModal({ isOpen, onClose, transactionId, transaction }: TransactionModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -62,12 +85,15 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     queryFn: getQueryFn({ on401: "throw" }),
   });
 
-  // Buscar transação se estiver editando
-  const { data: transaction, isLoading: isLoadingTransaction } = useQuery({
+  // Buscar transação se estiver editando e não foi passada diretamente
+  const { data: fetchedTransaction, isLoading: isLoadingTransaction } = useQuery({
     queryKey: ["/api/transactions", transactionId],
-    queryFn: transactionId ? getQueryFn({ on401: "throw" }) : () => null,
-    enabled: !!transactionId,
+    queryFn: transactionId && !transaction ? getQueryFn({ on401: "throw" }) : () => null,
+    enabled: !!transactionId && !transaction,
   });
+  
+  // Usar a transação passada como prop ou a buscada da API
+  const currentTransaction = transaction || fetchedTransaction;
 
   // Formatar data atual para formato YYYY-MM-DD
   const formatDateForInput = (date: Date | string): string => {
@@ -93,16 +119,16 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
 
   // Atualizar formulário quando carregar a transação
   useEffect(() => {
-    if (transaction) {
+    if (currentTransaction) {
       try {
-        const transactionDate = new Date(transaction.date);
+        const transactionDate = new Date(currentTransaction.date);
         const formattedDate = formatDateForInput(transactionDate);
         
         form.reset({
-          type: transaction.type,
-          description: transaction.description,
-          amount: transaction.amount,
-          categoryId: transaction.categoryId,
+          type: currentTransaction.type,
+          description: currentTransaction.description,
+          amount: currentTransaction.amount,
+          categoryId: currentTransaction.category_id || 0,
           date: formattedDate,
           // Removido campo notes pois não existe na tabela do Supabase
         });
@@ -110,10 +136,10 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
         console.error("Erro ao formatar data da transação:", error);
         // Usar data atual como fallback
         form.reset({
-          type: transaction.type,
-          description: transaction.description,
-          amount: transaction.amount,
-          categoryId: transaction.categoryId,
+          type: currentTransaction.type,
+          description: currentTransaction.description,
+          amount: currentTransaction.amount,
+          categoryId: currentTransaction.category_id || 0,
           date: formatDateForInput(new Date()),
           // Removido campo notes pois não existe na tabela do Supabase
         });
@@ -128,7 +154,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
         // Removido campo notes pois não existe na tabela do Supabase
       });
     }
-  }, [transaction, form]);
+  }, [currentTransaction, form]);
 
   // Mutação para criar transação
   const createMutation = useMutation({
@@ -389,7 +415,7 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {categories?.map((category: Category) => (
+                        {Array.isArray(categories) && categories.map((category: Category) => (
                           <SelectItem 
                             key={category.id} 
                             value={category.id.toString()}
