@@ -133,16 +133,18 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para criar transação
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
-      // Primeiro enviar para webhook antes de criar no banco
+      // Primeiro criar a transação no backend
+      const response = await apiRequest("POST", "/api/transactions", data);
+      const newTransaction = await response.json();
+      
+      // Depois enviar para webhook com ID da transação já criada
       try {
-        await sendToWebhook("create", data);
+        await sendToWebhook("create", data, newTransaction.id);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      // Agora criar a transação no backend
-      const response = await apiRequest("POST", "/api/transactions", data);
-      return response.json();
+      return newTransaction;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
@@ -169,16 +171,18 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para atualizar transação
   const updateMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
-      // Primeiro enviar para webhook antes de atualizar no banco
+      // Primeiro atualizar a transação no backend
+      const response = await apiRequest("PUT", `/api/transactions/${transactionId}`, data);
+      const updatedTransaction = await response.json();
+      
+      // Depois enviar para webhook
       try {
         await sendToWebhook("update", data, transactionId);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      // Agora atualizar a transação no backend
-      const response = await apiRequest("PUT", `/api/transactions/${transactionId}`, data);
-      return response.json();
+      return updatedTransaction;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
@@ -206,15 +210,19 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para excluir transação
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      // Primeiro enviar para webhook antes de excluir do banco
+      // Salvar dados antes da exclusão para enviar ao webhook
+      const transactionData = form.getValues();
+      
+      // Primeiro excluir a transação do backend
+      const response = await apiRequest("DELETE", `/api/transactions/${transactionId}`);
+      
+      // Depois enviar para webhook
       try {
-        await sendToWebhook("delete", form.getValues(), transactionId);
+        await sendToWebhook("delete", transactionData, transactionId);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      // Agora excluir a transação do backend
-      const response = await apiRequest("DELETE", `/api/transactions/${transactionId}`);
       return response;
     },
     onSuccess: () => {

@@ -95,8 +95,18 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para criar categoria
   const createMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
+      // Primeiro criar a categoria no backend
       const response = await apiRequest("POST", "/api/categories", data);
-      return response.json();
+      const newCategory = await response.json();
+      
+      // Depois enviar para webhook com ID da categoria já criada
+      try {
+        await sendToWebhook("create", data, newCategory.id);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return newCategory;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -105,9 +115,6 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
         description: "A categoria foi criada com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("create", form.getValues());
     },
     onError: (error) => {
       toast({
@@ -122,8 +129,18 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para atualizar categoria
   const updateMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
+      // Primeiro atualizar a categoria no backend
       const response = await apiRequest("PUT", `/api/categories/${categoryId}`, data);
-      return response.json();
+      const updatedCategory = await response.json();
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("update", data, categoryId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return updatedCategory;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -133,9 +150,6 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
         description: "A categoria foi atualizada com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("update", form.getValues(), categoryId);
     },
     onError: (error) => {
       toast({

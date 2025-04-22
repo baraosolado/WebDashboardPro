@@ -95,8 +95,18 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
   // Mutação para criar orçamento
   const createMutation = useMutation({
     mutationFn: async (data: BudgetFormValues) => {
+      // Primeiro criar o orçamento no backend
       const response = await apiRequest("POST", "/api/budgets", data);
-      return response.json();
+      const newBudget = await response.json();
+      
+      // Depois enviar para webhook com ID do orçamento já criado
+      try {
+        await sendToWebhook("create", data, newBudget.id);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return newBudget;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
@@ -105,9 +115,6 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
         description: "O orçamento foi criado com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("create", form.getValues());
     },
     onError: (error) => {
       toast({
@@ -122,8 +129,18 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
   // Mutação para atualizar orçamento
   const updateMutation = useMutation({
     mutationFn: async (data: BudgetFormValues) => {
+      // Primeiro atualizar o orçamento no backend
       const response = await apiRequest("PUT", `/api/budgets/${budgetId}`, data);
-      return response.json();
+      const updatedBudget = await response.json();
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("update", data, budgetId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return updatedBudget;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
@@ -133,9 +150,6 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
         description: "O orçamento foi atualizado com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("update", form.getValues(), budgetId);
     },
     onError: (error) => {
       toast({
@@ -150,7 +164,19 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
   // Mutação para excluir orçamento
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      // Salvar dados antes da exclusão para enviar ao webhook
+      const budgetData = form.getValues();
+      
+      // Primeiro excluir o orçamento do backend
       const response = await apiRequest("DELETE", `/api/budgets/${budgetId}`);
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("delete", budgetData, budgetId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
       return response;
     },
     onSuccess: () => {
@@ -160,9 +186,6 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
         description: "O orçamento foi excluído com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("delete", form.getValues(), budgetId);
     },
     onError: (error) => {
       toast({
