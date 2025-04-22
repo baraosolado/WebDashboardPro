@@ -43,7 +43,7 @@ export default function Transactions() {
   const [transactionToDelete, setTransactionToDelete] = useState<TransactionWithCategory | null>(null);
 
   // Buscar todas as transações
-  const { data: transactions, isLoading } = useQuery({
+  const { data: transactions, isLoading } = useQuery<TransactionWithCategory[]>({
     queryKey: ["/api/transactions"],
     queryFn: getQueryFn({ on401: "throw" }),
   });
@@ -112,20 +112,26 @@ export default function Transactions() {
     setCategoryId("all");
   };
 
+  // Estados para o modal de transação
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionWithCategory | null>(null);
+  
   // Funções para gerenciar o modal
   const openNewTransactionModal = () => {
     setSelectedTransactionId(null);
+    setSelectedTransaction(null);
     setIsModalOpen(true);
   };
 
-  const openEditTransactionModal = (transactionId: number) => {
-    setSelectedTransactionId(transactionId);
+  const openEditTransactionModal = (transaction: TransactionWithCategory) => {
+    setSelectedTransactionId(transaction.id);
+    setSelectedTransaction(transaction);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedTransactionId(null);
+    setSelectedTransaction(null);
   };
   
   // Filtro de transações
@@ -250,7 +256,7 @@ export default function Transactions() {
                             variant="warning" 
                             size="sm" 
                             className="h-8 text-xs"
-                            onClick={() => openEditTransactionModal(transaction.id)}
+                            onClick={() => openEditTransactionModal(transaction)}
                           >
                             Editar
                           </Button>
@@ -281,6 +287,7 @@ export default function Transactions() {
         isOpen={isModalOpen}
         onClose={closeModal}
         transactionId={selectedTransactionId}
+        transaction={selectedTransaction}
       />
       
       {/* Diálogo de confirmação de exclusão */}
