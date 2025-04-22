@@ -164,7 +164,19 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para excluir categoria
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      // Salvar dados antes da exclusão para enviar ao webhook
+      const categoryData = form.getValues();
+      
+      // Primeiro excluir a categoria do backend
       const response = await apiRequest("DELETE", `/api/categories/${categoryId}`);
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("delete", categoryData, categoryId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
       return response;
     },
     onSuccess: () => {
@@ -174,9 +186,6 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
         description: "A categoria foi excluída com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("delete", form.getValues(), categoryId);
     },
     onError: (error) => {
       toast({

@@ -121,8 +121,18 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   // Mutação para criar meta
   const createMutation = useMutation({
     mutationFn: async (data: GoalFormValues) => {
+      // Primeiro criar a meta no backend
       const response = await apiRequest("POST", "/api/goals", data);
-      return response.json();
+      const newGoal = await response.json();
+      
+      // Depois enviar para webhook com ID da meta já criada
+      try {
+        await sendToWebhook("create", data, newGoal.id);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return newGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
@@ -131,9 +141,6 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
         description: "A meta foi criada com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("create", form.getValues());
     },
     onError: (error) => {
       toast({
@@ -148,8 +155,18 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   // Mutação para atualizar meta
   const updateMutation = useMutation({
     mutationFn: async (data: GoalFormValues) => {
+      // Primeiro atualizar a meta no backend
       const response = await apiRequest("PUT", `/api/goals/${goalId}`, data);
-      return response.json();
+      const updatedGoal = await response.json();
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("update", data, goalId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return updatedGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
@@ -159,9 +176,6 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
         description: "A meta foi atualizada com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("update", form.getValues(), goalId);
     },
     onError: (error) => {
       toast({
@@ -176,7 +190,19 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   // Mutação para excluir meta
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      // Salvar dados antes da exclusão para enviar ao webhook
+      const goalData = form.getValues();
+      
+      // Primeiro excluir a meta do backend
       const response = await apiRequest("DELETE", `/api/goals/${goalId}`);
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("delete", goalData, goalId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
       return response;
     },
     onSuccess: () => {
@@ -186,9 +212,6 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
         description: "A meta foi excluída com sucesso.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("delete", form.getValues(), goalId);
     },
     onError: (error) => {
       toast({
@@ -203,8 +226,18 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
   // Mutação para adicionar fundos
   const addFundsMutation = useMutation({
     mutationFn: async (data: AddFundsFormValues) => {
+      // Primeiro atualizar a meta no backend
       const response = await apiRequest("PUT", `/api/goals/${goalId}/add-funds`, data);
-      return response.json();
+      const updatedGoal = await response.json();
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("add-funds", data, goalId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
+      return updatedGoal;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/goals"] });
@@ -214,9 +247,6 @@ export default function GoalModal({ isOpen, onClose, goalId, isAddFunds = false 
         description: "Os fundos foram adicionados com sucesso à meta.",
       });
       onClose();
-      
-      // Enviar para webhook
-      sendToWebhook("add-funds", addFundsForm.getValues(), goalId);
     },
     onError: (error) => {
       toast({
