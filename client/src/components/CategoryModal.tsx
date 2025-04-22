@@ -95,18 +95,16 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para criar categoria
   const createMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
-      // Primeiro criar a categoria no backend
-      const response = await apiRequest("POST", "/api/categories", data);
-      const newCategory = await response.json();
-      
-      // Depois enviar para webhook com ID da categoria já criada
+      // Primeiro enviar para webhook antes de criar no banco
       try {
-        await sendToWebhook("create", data, newCategory.id);
+        await sendToWebhook("create", data);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      return newCategory;
+      // Depois criar a categoria no backend
+      const response = await apiRequest("POST", "/api/categories", data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -129,18 +127,16 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para atualizar categoria
   const updateMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
-      // Primeiro atualizar a categoria no backend
-      const response = await apiRequest("PUT", `/api/categories/${categoryId}`, data);
-      const updatedCategory = await response.json();
-      
-      // Depois enviar para webhook
+      // Primeiro enviar para webhook
       try {
         await sendToWebhook("update", data, categoryId);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      return updatedCategory;
+      // Depois atualizar a categoria no backend
+      const response = await apiRequest("PUT", `/api/categories/${categoryId}`, data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -167,16 +163,15 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
       // Salvar dados antes da exclusão para enviar ao webhook
       const categoryData = form.getValues();
       
-      // Primeiro excluir a categoria do backend
-      const response = await apiRequest("DELETE", `/api/categories/${categoryId}`);
-      
-      // Depois enviar para webhook
+      // Primeiro enviar para webhook antes de excluir
       try {
         await sendToWebhook("delete", categoryData, categoryId);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
+      // Depois excluir a categoria do backend
+      const response = await apiRequest("DELETE", `/api/categories/${categoryId}`);
       return response;
     },
     onSuccess: () => {

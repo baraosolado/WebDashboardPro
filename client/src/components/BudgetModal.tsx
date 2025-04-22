@@ -95,18 +95,16 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
   // Mutação para criar orçamento
   const createMutation = useMutation({
     mutationFn: async (data: BudgetFormValues) => {
-      // Primeiro criar o orçamento no backend
-      const response = await apiRequest("POST", "/api/budgets", data);
-      const newBudget = await response.json();
-      
-      // Depois enviar para webhook com ID do orçamento já criado
+      // Primeiro enviar para webhook antes de criar no banco
       try {
-        await sendToWebhook("create", data, newBudget.id);
+        await sendToWebhook("create", data);
       } catch (error) {
         console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      return newBudget;
+      // Depois criar o orçamento no backend
+      const response = await apiRequest("POST", "/api/budgets", data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
