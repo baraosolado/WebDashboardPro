@@ -95,16 +95,16 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para criar categoria
   const createMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
-      // Primeiro enviar para webhook antes de criar no banco
+      // Apenas enviar para webhook - o n8n irá inserir no Supabase
       try {
         await sendToWebhook("create", data);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois criar a categoria no backend
-      const response = await apiRequest("POST", "/api/categories", data);
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -127,16 +127,16 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
   // Mutação para atualizar categoria
   const updateMutation = useMutation({
     mutationFn: async (data: CategoryFormValues) => {
-      // Primeiro enviar para webhook
+      // Apenas enviar para webhook - o n8n irá atualizar no Supabase
       try {
         await sendToWebhook("update", data, categoryId);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois atualizar a categoria no backend
-      const response = await apiRequest("PUT", `/api/categories/${categoryId}`, data);
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
@@ -163,16 +163,16 @@ export default function CategoryModal({ isOpen, onClose, categoryId }: CategoryM
       // Salvar dados antes da exclusão para enviar ao webhook
       const categoryData = form.getValues();
       
-      // Primeiro enviar para webhook antes de excluir
+      // Apenas enviar para webhook - o n8n irá excluir no Supabase
       try {
         await sendToWebhook("delete", categoryData, categoryId);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois excluir a categoria do backend
-      const response = await apiRequest("DELETE", `/api/categories/${categoryId}`);
-      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });

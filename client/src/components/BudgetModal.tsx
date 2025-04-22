@@ -95,16 +95,16 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
   // Mutação para criar orçamento
   const createMutation = useMutation({
     mutationFn: async (data: BudgetFormValues) => {
-      // Primeiro enviar para webhook antes de criar no banco
+      // Apenas enviar para webhook - o n8n irá inserir no Supabase
       try {
         await sendToWebhook("create", data);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois criar o orçamento no backend
-      const response = await apiRequest("POST", "/api/budgets", data);
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
@@ -127,16 +127,16 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
   // Mutação para atualizar orçamento
   const updateMutation = useMutation({
     mutationFn: async (data: BudgetFormValues) => {
-      // Primeiro enviar para webhook
+      // Apenas enviar para webhook - o n8n irá atualizar no Supabase
       try {
         await sendToWebhook("update", data, budgetId);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois atualizar o orçamento no backend
-      const response = await apiRequest("PUT", `/api/budgets/${budgetId}`, data);
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
@@ -163,16 +163,16 @@ export default function BudgetModal({ isOpen, onClose, budgetId }: BudgetModalPr
       // Salvar dados antes da exclusão para enviar ao webhook
       const budgetData = form.getValues();
       
-      // Primeiro enviar para webhook antes de excluir
+      // Apenas enviar para webhook - o n8n irá excluir no Supabase
       try {
         await sendToWebhook("delete", budgetData, budgetId);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois excluir o orçamento do backend
-      const response = await apiRequest("DELETE", `/api/budgets/${budgetId}`);
-      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/budgets"] });
