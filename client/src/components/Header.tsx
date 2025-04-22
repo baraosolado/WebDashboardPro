@@ -3,18 +3,60 @@ import { Link, useLocation } from "wouter";
 import { NAV_ITEMS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { LogOut, Menu, User } from "lucide-react";
+import { LogOut, Menu, User, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Header() {
   const [location] = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { username, logout } = useAuth();
   const { themeConfig } = useTheme();
+  const { toast } = useToast();
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleDownload = async () => {
+    try {
+      toast({
+        title: "Preparando download",
+        description: "Aguarde enquanto preparamos seu arquivo .zip...",
+      });
+      
+      const response = await fetch("/api/download");
+      
+      if (!response.ok) {
+        throw new Error("Falha ao baixar o arquivo");
+      }
+      
+      // Criar um link temporário para o download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "fintrack_project.zip";
+      document.body.appendChild(a);
+      a.click();
+      
+      // Limpar após o download
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Download iniciado!",
+        description: "Seu arquivo .zip está sendo baixado.",
+      });
+    } catch (error) {
+      console.error("Erro ao baixar o projeto:", error);
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar o projeto. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
   };
 
   const headerStyle = {
@@ -66,6 +108,15 @@ export default function Header() {
             <Button 
               variant="ghost" 
               size="sm" 
+              className="flex items-center text-white hover:bg-white/20 mr-2"
+              onClick={handleDownload}
+            >
+              <Download className="w-4 h-4 mr-1" />
+              <span>Baixar</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
               className="flex items-center text-white hover:bg-white/20"
               onClick={handleLogout}
             >
@@ -103,6 +154,18 @@ export default function Header() {
                   </span>
                 </Link>
               ))}
+              
+              {/* Download button in mobile menu */}
+              <button
+                className="py-4 px-6 border-b border-gray-700 text-lg hover:bg-gray-700 transition-colors text-left flex items-center"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleDownload();
+                }}
+              >
+                <Download className="w-5 h-5 mr-2" />
+                <span>Baixar projeto</span>
+              </button>
               
               {/* Logout in mobile menu */}
               <button
