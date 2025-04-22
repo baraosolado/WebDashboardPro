@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-content">
-        <p>© {currentYear} <Link href="/">FinTrack</Link> - Todos os direitos reservados.</p>
+        <p>© {currentYear} <Link href="/">FinTrack</Link> - Todos os direitos reservados. Desenvolvido por Solandox.</p>
       </div>
     </footer>
   );
