@@ -5,6 +5,9 @@
 :root {
   --primary-color: #4CAF50;
   --primary-hover: #3b9c3f;
+  --solandox-green: #00c78e;
+  --solandox-dark-green: #006450;
+  --solandox-light-green: #00b280;
 }
 
 @layer base {
@@ -24,6 +27,191 @@
 
 .text-primary {
   color: var(--primary-color);
+}
+
+/* Estilos para a página de autenticação SolandoX */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--solandox-dark-green), #009570);
+  overflow: hidden;
+  position: relative;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.auth-page::before,
+.auth-page::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+  animation: moveLines 30s linear infinite;
+}
+
+.auth-page::after {
+  transform: rotate(45deg);
+  background-size: 70px 70px;
+}
+
+@keyframes moveLines {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 50px 50px;
+  }
+}
+
+.auth-container {
+  position: relative;
+  z-index: 1;
+  width: 380px;
+  padding: 30px;
+  border-radius: 15px;
+  background: rgba(30, 30, 30, 0.6);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: white;
+  max-width: 90%;
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.auth-logo {
+  width: 40px;
+  height: 40px;
+  background-color: var(--solandox-green);
+  border-radius: 8px;
+  margin-right: 15px;
+}
+
+.auth-brand {
+  color: var(--solandox-green);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.auth-title {
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 500;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.auth-form-group {
+  margin-bottom: 20px;
+}
+
+.auth-form-control {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.auth-form-control:focus {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.auth-form-control::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--solandox-green);
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.auth-btn:hover {
+  background-color: var(--solandox-light-green);
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.auth-btn:disabled {
+  background-color: #3a3a3a;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.auth-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: var(--solandox-green);
+}
+
+.code-inputs {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.code-input {
+  width: 40px;
+  height: 50px;
+  font-size: 24px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.auth-message {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: white;
+}
+
+.green-line {
+  height: 5px;
+  background-color: var(--solandox-green);
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  margin-bottom: 25px;
+}
+
+.auth-error-message {
+  color: #ff5252;
+  font-size: 13px;
+  margin-top: 5px;
 }
 
 .border-primary {

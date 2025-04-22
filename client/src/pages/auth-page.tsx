@@ -22,13 +22,8 @@ const registerSchema = z.object({
   path: ["confirmPassword"],
 });
 
-const verificationSchema = z.object({
-  code: z.string().length(6, "O código deve ter 6 dígitos"),
-});
-
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
-type VerificationFormValues = z.infer<typeof verificationSchema>;
 
 export default function AuthPage() {
   const [showLogin, setShowLogin] = useState(true);
@@ -282,122 +277,122 @@ export default function AuthPage() {
 
   // Componentes que representam cada página
   const LoginContainer = () => (
-    <div className="container">
-      <div className="header">
-        <div className="logo"></div>
-        <div className="brand">SOLANDOX</div>
+    <div className="auth-container">
+      <div className="auth-header">
+        <div className="auth-logo"></div>
+        <div className="auth-brand">SOLANDOX</div>
       </div>
-      <h2>Login</h2>
+      <h2 className="auth-title">Login</h2>
       <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
-        <div className="form-group">
+        <div className="auth-form-group">
           <input 
             type="email" 
-            className="form-control" 
+            className="auth-form-control" 
             placeholder="Email" 
             {...loginForm.register("email")}
             required 
           />
           {loginForm.formState.errors.email && (
-            <div className="error-message">{loginForm.formState.errors.email.message}</div>
+            <div className="auth-error-message">{loginForm.formState.errors.email.message}</div>
           )}
         </div>
-        <div className="form-group">
+        <div className="auth-form-group">
           <input 
             type="password" 
-            className="form-control" 
+            className="auth-form-control" 
             placeholder="Senha" 
             {...loginForm.register("password")}
             required 
           />
           {loginForm.formState.errors.password && (
-            <div className="error-message">{loginForm.formState.errors.password.message}</div>
+            <div className="auth-error-message">{loginForm.formState.errors.password.message}</div>
           )}
         </div>
-        <button type="submit" className="btn" disabled={loading}>
+        <button type="submit" className="auth-btn" disabled={loading}>
           {loading ? "Aguarde..." : "Login"}
         </button>
       </form>
-      <a href="#" className="link" onClick={(e) => { e.preventDefault(); setShowLogin(false); }}>
+      <a href="#" className="auth-link" onClick={(e) => { e.preventDefault(); setShowLogin(false); }}>
         Ainda não tem conta? Cadastre-se
       </a>
     </div>
   );
 
   const RegisterContainer = () => (
-    <div className="container">
-      <div className="header">
-        <div className="logo"></div>
-        <div className="brand">SOLANDOX</div>
+    <div className="auth-container">
+      <div className="auth-header">
+        <div className="auth-logo"></div>
+        <div className="auth-brand">SOLANDOX</div>
       </div>
-      <h2>Criar Conta</h2>
+      <h2 className="auth-title">Criar Conta</h2>
       <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)}>
-        <div className="form-group">
+        <div className="auth-form-group">
           <input 
             type="text" 
-            className="form-control" 
+            className="auth-form-control" 
             placeholder="Nome Completo" 
             {...registerForm.register("fullName")}
             required 
           />
           {registerForm.formState.errors.fullName && (
-            <div className="error-message">{registerForm.formState.errors.fullName.message}</div>
+            <div className="auth-error-message">{registerForm.formState.errors.fullName.message}</div>
           )}
         </div>
-        <div className="form-group">
+        <div className="auth-form-group">
           <input 
             type="email" 
-            className="form-control" 
+            className="auth-form-control" 
             placeholder="Email" 
             {...registerForm.register("email")}
             required 
           />
           {registerForm.formState.errors.email && (
-            <div className="error-message">{registerForm.formState.errors.email.message}</div>
+            <div className="auth-error-message">{registerForm.formState.errors.email.message}</div>
           )}
         </div>
-        <div className="form-group">
+        <div className="auth-form-group">
           <input 
             type="password" 
-            className="form-control" 
+            className="auth-form-control" 
             placeholder="Senha" 
             {...registerForm.register("password")}
             required 
           />
           {registerForm.formState.errors.password && (
-            <div className="error-message">{registerForm.formState.errors.password.message}</div>
+            <div className="auth-error-message">{registerForm.formState.errors.password.message}</div>
           )}
         </div>
-        <div className="form-group">
+        <div className="auth-form-group">
           <input 
             type="password" 
-            className="form-control" 
+            className="auth-form-control" 
             placeholder="Confirmar Senha" 
             {...registerForm.register("confirmPassword")}
             required 
           />
           {registerForm.formState.errors.confirmPassword && (
-            <div className="error-message">{registerForm.formState.errors.confirmPassword.message}</div>
+            <div className="auth-error-message">{registerForm.formState.errors.confirmPassword.message}</div>
           )}
         </div>
-        <button type="submit" className="btn" disabled={loading}>
+        <button type="submit" className="auth-btn" disabled={loading}>
           {loading ? "Aguarde..." : "Cadastrar"}
         </button>
       </form>
-      <a href="#" className="link" onClick={(e) => { e.preventDefault(); setShowLogin(true); }}>
+      <a href="#" className="auth-link" onClick={(e) => { e.preventDefault(); setShowLogin(true); }}>
         Já tem uma conta? Faça login
       </a>
     </div>
   );
 
   const VerificationContainer = () => (
-    <div className="container">
+    <div className="auth-container">
       <div className="green-line"></div>
-      <div className="header">
-        <div className="logo"></div>
-        <div className="brand">SOLANDOX</div>
+      <div className="auth-header">
+        <div className="auth-logo"></div>
+        <div className="auth-brand">SOLANDOX</div>
       </div>
-      <h2>Verificação de Código</h2>
-      <p className="message">
+      <h2 className="auth-title">Verificação de Código</h2>
+      <p className="auth-message">
         Enviamos um código de 6 dígitos para seu email. Digite o código abaixo para completar a verificação.
       </p>
       
@@ -418,209 +413,20 @@ export default function AuthPage() {
       
       <button 
         type="button" 
-        className="btn" 
+        className="auth-btn" 
         onClick={handleVerification} 
         disabled={!isCodeComplete || loading}
       >
         {loading ? "Verificando..." : "Verificar"}
       </button>
-      <a href="#" className="link" onClick={(e) => { e.preventDefault(); resendCode(); }}>
+      <a href="#" className="auth-link" onClick={(e) => { e.preventDefault(); resendCode(); }}>
         Não recebeu o código? Reenviar
       </a>
     </div>
   );
 
   return (
-    <div className="auth-page">
-      <style>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .auth-page {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 100vh;
-          background: linear-gradient(135deg, #006450, #009570);
-          overflow: hidden;
-          position: relative;
-        }
-        
-        .auth-page::before,
-        .auth-page::after {
-          content: '';
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          top: 0;
-          left: 0;
-          background-size: 50px 50px;
-          background-image: 
-            linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
-          animation: moveLines 30s linear infinite;
-        }
-        
-        .auth-page::after {
-          transform: rotate(45deg);
-          background-size: 70px 70px;
-        }
-        
-        @keyframes moveLines {
-          0% {
-            background-position: 0 0;
-          }
-          100% {
-            background-position: 50px 50px;
-          }
-        }
-        
-        .container {
-          position: relative;
-          z-index: 1;
-          width: 380px;
-          padding: 30px;
-          border-radius: 15px;
-          background: rgba(30, 30, 30, 0.6);
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          color: white;
-          max-width: 90%;
-        }
-        
-        .header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 30px;
-        }
-        
-        .logo {
-          width: 40px;
-          height: 40px;
-          background-color: #00c78e;
-          border-radius: 8px;
-          margin-right: 15px;
-        }
-        
-        .brand {
-          color: #00c78e;
-          font-size: 24px;
-          font-weight: bold;
-        }
-        
-        h2 {
-          text-align: center;
-          margin-bottom: 25px;
-          font-weight: 500;
-        }
-        
-        .form-group {
-          margin-bottom: 20px;
-        }
-        
-        .form-control {
-          width: 100%;
-          padding: 12px 15px;
-          border-radius: 8px;
-          border: none;
-          background-color: rgba(255, 255, 255, 0.2);
-          color: white;
-          font-size: 16px;
-          outline: none;
-          transition: all 0.3s;
-        }
-        
-        .form-control:focus {
-          background-color: rgba(255, 255, 255, 0.3);
-        }
-        
-        .form-control::placeholder {
-          color: rgba(255, 255, 255, 0.7);
-        }
-        
-        .btn {
-          width: 100%;
-          padding: 12px;
-          border: none;
-          border-radius: 8px;
-          background-color: #00c78e;
-          color: white;
-          font-size: 16px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.3s;
-        }
-        
-        .btn:hover {
-          background-color: #00b280;
-          transform: translateY(-3px);
-          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .btn:disabled {
-          background-color: #3a3a3a;
-          cursor: not-allowed;
-          transform: none;
-          box-shadow: none;
-        }
-        
-        .link {
-          display: block;
-          text-align: center;
-          margin-top: 20px;
-          color: rgba(255, 255, 255, 0.7);
-          text-decoration: none;
-        }
-        
-        .link:hover {
-          color: #00c78e;
-        }
-        
-        .code-inputs {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 20px;
-        }
-        
-        .code-input {
-          width: 40px;
-          height: 50px;
-          font-size: 24px;
-          text-align: center;
-          border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.3);
-          background-color: rgba(255, 255, 255, 0.2);
-          color: white;
-        }
-        
-        .message {
-          text-align: center;
-          margin-bottom: 15px;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-        
-        .green-line {
-          height: 5px;
-          background-color: #00c78e;
-          width: 100%;
-          border-radius: 3px 3px 0 0;
-          margin-bottom: 25px;
-        }
-        
-        .error-message {
-          color: #ff5252;
-          font-size: 13px;
-          margin-top: 5px;
-        }
-      `}</style>
-      
+    <div className="auth-page">      
       {showVerification ? (
         <VerificationContainer />
       ) : (
