@@ -120,8 +120,12 @@ export default function TransactionsList() {
       {/* Transaction Modal */}
       <TransactionModal
         isOpen={showTransactionModal}
-        onClose={() => setShowTransactionModal(false)}
+        onClose={() => {
+          setShowTransactionModal(false);
+          setCurrentTransaction(null);
+        }}
         transactionId={currentTransaction?.id}
+        transaction={currentTransaction}
       />
     </>
   );

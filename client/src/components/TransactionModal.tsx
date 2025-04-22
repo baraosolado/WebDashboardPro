@@ -23,28 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-// Interface para a categoria
-interface Category {
-  id: number;
-  name: string;
-  type: string;
-  color: string;
-  created_at?: string;
-}
-
-// Interface para transação com categoria
-interface TransactionWithCategory {
-  id: number;
-  description: string;
-  amount: number;
-  type: string;
-  date: string;
-  category_id: number | null;
-  user_id?: number | null;
-  created_at?: string;
-  category: Category | null;
-}
+import { Category, TransactionWithCategory } from "@shared/schema";
 import {
   Select,
   SelectContent,
@@ -53,7 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Category } from "@shared/schema";
 
 // Schema para validação do formulário
 const transactionSchema = z.object({
@@ -124,22 +102,29 @@ export default function TransactionModal({ isOpen, onClose, transactionId, trans
         const transactionDate = new Date(currentTransaction.date);
         const formattedDate = formatDateForInput(transactionDate);
         
+        // Usamos || para lidar com a diferença entre CategoryId e category_id vinda do Supabase
+        const categoryId = (currentTransaction as any).categoryId || (currentTransaction as any).category_id || 0;
+        
         form.reset({
-          type: currentTransaction.type,
+          type: currentTransaction.type as "income" | "expense",
           description: currentTransaction.description,
           amount: currentTransaction.amount,
-          categoryId: currentTransaction.category_id || 0,
+          categoryId: categoryId,
           date: formattedDate,
           // Removido campo notes pois não existe na tabela do Supabase
         });
       } catch (error) {
         console.error("Erro ao formatar data da transação:", error);
         // Usar data atual como fallback
+        
+        // Usamos || para lidar com a diferença entre CategoryId e category_id vinda do Supabase
+        const categoryId = (currentTransaction as any).categoryId || (currentTransaction as any).category_id || 0;
+        
         form.reset({
-          type: currentTransaction.type,
+          type: currentTransaction.type as "income" | "expense",
           description: currentTransaction.description,
           amount: currentTransaction.amount,
-          categoryId: currentTransaction.category_id || 0,
+          categoryId: categoryId,
           date: formatDateForInput(new Date()),
           // Removido campo notes pois não existe na tabela do Supabase
         });
