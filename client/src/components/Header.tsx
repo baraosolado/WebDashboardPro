@@ -169,6 +169,18 @@ export default function Header() {
                 <span>Baixar projeto</span>
               </button>
               
+              {/* WordPress download button in mobile menu */}
+              <button
+                className="py-4 px-6 border-b border-gray-700 text-lg hover:bg-gray-700 transition-colors text-left flex items-center"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  window.location.href = "/download-wordpress-plugin";
+                }}
+              >
+                <Download className="w-5 h-5 mr-2" />
+                <span>Plugin WordPress</span>
+              </button>
+              
               {/* Logout in mobile menu */}
               <button
                 className="py-4 px-6 border-b border-gray-700 text-lg hover:bg-gray-700 transition-colors text-left flex items-center"
