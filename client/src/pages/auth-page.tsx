@@ -15,6 +15,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   fullName: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
+  phone: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").max(15, "Telefone deve ter no máximo 15 dígitos"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   confirmPassword: z.string().min(6, "Confirmação de senha deve ter pelo menos 6 caracteres"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -57,6 +58,7 @@ export default function AuthPage() {
     defaultValues: {
       fullName: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     },
@@ -206,6 +208,7 @@ export default function AuthPage() {
           body: JSON.stringify({
             username: registerData.fullName,
             email: registerData.email,
+            phone: registerData.phone,
             password: registerData.password,
           }),
         });
@@ -348,6 +351,18 @@ export default function AuthPage() {
           />
           {registerForm.formState.errors.email && (
             <div className="auth-error-message">{registerForm.formState.errors.email.message}</div>
+          )}
+        </div>
+        <div className="auth-form-group">
+          <input 
+            type="tel" 
+            className="auth-form-control" 
+            placeholder="Telefone (com DDD)" 
+            {...registerForm.register("phone")}
+            required 
+          />
+          {registerForm.formState.errors.phone && (
+            <div className="auth-error-message">{registerForm.formState.errors.phone.message}</div>
           )}
         </div>
         <div className="auth-form-group">

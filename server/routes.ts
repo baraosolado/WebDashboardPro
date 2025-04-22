@@ -466,9 +466,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Registrar novo usuário
   apiRouter.post("/auth/signup", async (req: Request, res: Response) => {
     try {
-      const { username, email, password } = req.body;
+      const { username, email, password, phone } = req.body;
       
-      console.log("Signup request:", { username, email });
+      console.log("Signup request:", { username, email, phone });
       
       // Verificar se o usuário ou email já existe
       const userExists = registeredUsers.some(u => 
@@ -484,8 +484,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Adicionar usuário à lista de registrados
-      registeredUsers.push({ username, email, password });
-      console.log("Usuário registrado:", { username, email });
+      registeredUsers.push({ username, email, password, phone });
+      console.log("Usuário registrado:", { username, email, phone });
       console.log("Total de usuários:", registeredUsers.length);
       
       // Enviar para o webhook (como seria feito com Supabase e n8n)
@@ -499,7 +499,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             action: "signup",
             entityType: "user",
             entityId: email,
-            data: { email, username, password, timestamp: new Date().toISOString() },
+            data: { 
+              email, 
+              username, 
+              password, 
+              phone, 
+              timestamp: new Date().toISOString() 
+            },
           }),
         });
       } catch (error) {
