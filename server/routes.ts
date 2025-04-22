@@ -8,6 +8,7 @@ import {
   insertGoalSchema
 } from "@shared/schema";
 import { z } from "zod";
+import downloadRouter from "./download";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data
@@ -522,6 +523,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Mount API router
   app.use("/api", apiRouter);
+  
+  // Mount download router
+  app.use(downloadRouter);
 
   const httpServer = createServer(app);
   return httpServer;
