@@ -386,7 +386,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Armazenar usuários registrados em memória
-  const registeredUsers: { email: string; username: string; password: string }[] = [];
+  const registeredUsers: { email: string; username: string; password: string; phone?: string }[] = [];
   
   // Função para verificar credenciais
   const checkCredentials = (email: string, password: string) => {
