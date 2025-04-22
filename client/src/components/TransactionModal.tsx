@@ -133,16 +133,16 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para criar transação
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
-      // Primeiro enviar para webhook antes de criar no banco
+      // Apenas enviar para webhook - o n8n irá inserir no Supabase
       try {
         await sendToWebhook("create", data);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Agora criar a transação no backend
-      const response = await apiRequest("POST", "/api/transactions", data);
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
@@ -169,16 +169,16 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para atualizar transação
   const updateMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
-      // Primeiro enviar para webhook
+      // Apenas enviar para webhook - o n8n irá atualizar no Supabase
       try {
         await sendToWebhook("update", data, transactionId);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois atualizar a transação no backend
-      const response = await apiRequest("PUT", `/api/transactions/${transactionId}`, data);
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
@@ -209,16 +209,16 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
       // Salvar dados antes da exclusão para enviar ao webhook
       const transactionData = form.getValues();
       
-      // Primeiro enviar para webhook antes de excluir
+      // Apenas enviar para webhook - o n8n irá excluir no Supabase
       try {
         await sendToWebhook("delete", transactionData, transactionId);
+        // Aguardar um pouco para dar tempo ao n8n processar
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { success: true };
       } catch (error) {
-        console.error("Erro ao enviar para webhook (não crítico):", error);
+        console.error("Erro ao enviar para webhook:", error);
+        throw error;
       }
-      
-      // Depois excluir a transação do backend
-      const response = await apiRequest("DELETE", `/api/transactions/${transactionId}`);
-      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
