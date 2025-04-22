@@ -133,27 +133,18 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para criar transação
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
-      // Verificar se já existe uma transação com mesmos dados
-      const existingTransactions = await apiRequest("GET", "/api/transactions/recent");
-      const existingTrans = await existingTransactions.json();
+      // Primeiro criar a transação no backend
+      const response = await apiRequest("POST", "/api/transactions", data);
+      const newTransaction = await response.json();
       
-      // Verificar duplicação por data, valor, descrição e tipo
-      const possibleDuplicate = existingTrans.find((t: any) => 
-        t.description.trim() === data.description.trim() && 
-        t.amount === data.amount && 
-        t.date === data.date && 
-        t.type === data.type
-      );
-      
-      // Se encontrou duplicata, apenas retorna ela em vez de criar nova
-      if (possibleDuplicate) {
-        console.log("Transação similar encontrada, evitando duplicação", possibleDuplicate);
-        return possibleDuplicate;
+      // Depois enviar para webhook com ID da transação já criada
+      try {
+        await sendToWebhook("create", data, newTransaction.id);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
       }
       
-      // Se não for duplicata, criar normalmente
-      const response = await apiRequest("POST", "/api/transactions", data);
-      return response.json();
+      return newTransaction;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
@@ -180,8 +171,17 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para atualizar transação
   const updateMutation = useMutation({
     mutationFn: async (data: TransactionFormValues) => {
+      // Primeiro atualizar a transação no backend
       const response = await apiRequest("PUT", `/api/transactions/${transactionId}`, data);
       const updatedTransaction = await response.json();
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("update", data, transactionId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
       return updatedTransaction;
     },
     onSuccess: () => {
@@ -210,7 +210,19 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
   // Mutação para excluir transação
   const deleteMutation = useMutation({
     mutationFn: async () => {
+      // Salvar dados antes da exclusão para enviar ao webhook
+      const transactionData = form.getValues();
+      
+      // Primeiro excluir a transação do backend
       const response = await apiRequest("DELETE", `/api/transactions/${transactionId}`);
+      
+      // Depois enviar para webhook
+      try {
+        await sendToWebhook("delete", transactionData, transactionId);
+      } catch (error) {
+        console.error("Erro ao enviar para webhook (não crítico):", error);
+      }
+      
       return response;
     },
     onSuccess: () => {
@@ -235,7 +247,32 @@ export default function TransactionModal({ isOpen, onClose, transactionId }: Tra
     },
   });
 
-  // Removida função sendToWebhook pois agora o n8n cuida da integração
+  // Função para enviar dados para o webhook (com flag markAsInternal)
+  const sendToWebhook = async (
+    action: "create" | "update" | "delete", 
+    data: any, 
+    id?: number | null
+  ) => {
+    try {
+      await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          entityType: "transaction",
+          entityId: id || "new",
+          data,
+          timestamp: new Date().toISOString(),
+          // Flag para indicar que a entidade já está sendo salva no banco pelo sistema
+          fromApp: true
+        }),
+      });
+    } catch (error) {
+      console.error("Erro ao enviar para webhook:", error);
+    }
+  };
 
   const onSubmit = (values: TransactionFormValues) => {
     if (transactionId) {
