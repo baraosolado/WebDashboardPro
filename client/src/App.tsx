@@ -8,8 +8,7 @@ import Budgets from "@/pages/Budgets";
 import Reports from "@/pages/Reports";
 import Goals from "@/pages/Goals";
 import Settings from "@/pages/Settings";
-import Login from "@/pages/Login";
-import Signup from "@/pages/Signup";
+import AuthPage from "@/pages/auth-page";
 import NotFoundPage from "@/pages/NotFoundPage";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -20,7 +19,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 function PrivateRoute({ component: Component, ...rest }: any) {
   const { isAuthenticated } = useAuth();
   
-  return isAuthenticated ? <Component {...rest} /> : <Redirect to="/login" />;
+  return isAuthenticated ? <Component {...rest} /> : <Redirect to="/auth" />;
 }
 
 function Router() {
@@ -28,11 +27,8 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/login">
-        {isAuthenticated ? <Redirect to="/" /> : <Login />}
-      </Route>
-      <Route path="/signup">
-        {isAuthenticated ? <Redirect to="/" /> : <Signup />}
+      <Route path="/auth">
+        {isAuthenticated ? <Redirect to="/" /> : <AuthPage />}
       </Route>
       <Route path="/" component={(props: any) => <PrivateRoute component={Dashboard} {...props} />} />
       <Route path="/dashboard" component={(props: any) => <PrivateRoute component={Dashboard} {...props} />} />

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOLANDOX - Sistema de Login</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #006450, #009570);
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Linhas de fundo contínuas */
+    .bg-lines {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+    
+    .bg-lines::before,
+    .bg-lines::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background-size: 50px 50px;
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.1) 1px, transparent 1px);
+      animation: moveLines 30s linear infinite;
+    }
+    
+    .bg-lines::after {
+      transform: rotate(45deg);
+      background-size: 70px 70px;
+    }
+    
+    @keyframes moveLines {
+      0% {
+        background-position: 0 0;
+      }
+      100% {
+        background-position: 50px 50px;
+      }
+    }
+    
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 380px;
+      padding: 30px;
+      border-radius: 15px;
+      /* Efeito de vidro */
+      background: rgba(30, 30, 30, 0.6);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: white;
+      max-width: 90%;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      width: 40px;
+      height: 40px;
+      background-color: #00c78e;
+      border-radius: 8px;
+      margin-right: 15px;
+    }
+    
+    .brand {
+      color: #00c78e;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-weight: 500;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-control {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 16px;
+      outline: none;
+      transition: all 0.3s;
+    }
+    
+    .form-control:focus {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .form-control::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: #00c78e;
+      color: white;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn:hover {
+      background-color: #00b280;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: rgba(255, 255, 255, 0.7);
+      text-decoration: none;
+    }
+    
+    .link:hover {
+      color: #00c78e;
+    }
+    
+    /* Verificação de código */
+    .code-inputs {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .code-input {
+      width: 40px;
+      height: 50px;
+      font-size: 24px;
+      text-align: center;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    
+    .message {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .green-line {
+      height: 5px;
+      background-color: #00c78e;
+      width: 100%;
+      border-radius: 3px 3px 0 0;
+      margin-bottom: 25px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-lines"></div>
+  
+  <!-- Página de Login -->
+  <div class="container" id="loginContainer">
+    <div class="header">
+      <div class="logo"></div>
+      <div class="brand">SOLANDOX</div>
+    </div>
+    <h2>Login</h2>
+    <form id="loginForm">
+      <div class="form-group">
+        <input type="email" class="form-control" id="loginEmail" placeholder="Email" required>
+      </div>
+      <div class="form-group">
+        <input type="password" class="form-control" id="loginPassword" placeholder="Senha" required>
+      </div>
+      <button type="submit" class="btn">Login</button>
+    </form>
+    <a href="#" class="link" id="showRegister">Ainda não tem conta? Cadastre-se</a>
+  </div>
+
+  <!-- Página de Cadastro -->
+  <div class="container" id="registerContainer" style="display: none;">
+    <div class="header">
+      <div class="logo"></div>
+      <div class="brand">SOLANDOX</div>
+    </div>
+    <h2>Criar Conta</h2>
+    <form id="registerForm">
+      <div class="form-group">
+        <input type="text" class="form-control" id="fullName" placeholder="Nome Completo" required>
+      </div>
+      <div class="form-group">
+        <input type="email" class="form-control" id="registerEmail" placeholder="Email" required>
+      </div>
+      <div class="form-group">
+        <input type="password" class="form-control" id="registerPassword" placeholder="Senha" required>
+      </div>
+      <div class="form-group">
+        <input type="password" class="form-control" id="confirmPassword" placeholder="Confirmar Senha" required>
+      </div>
+      <button type="submit" class="btn">Cadastrar</button>
+    </form>
+    <a href="#" class="link" id="showLogin">Já tem uma conta? Faça login</a>
+  </div>
+
+  <!-- Página de Verificação de Código -->
+  <div class="container" id="verificationContainer" style="display: none;">
+    <div class="green-line"></div>
+    <div class="header">
+      <div class="logo"></div>
+      <div class="brand">SOLANDOX</div>
+    </div>
+    <h2>Verificação de Código</h2>
+    <p class="message">Enviamos um código de 6 dígitos para seu email. Digite o código abaixo para completar a verificação.</p>
+    
+    <div class="code-inputs">
+      <input type="text" class="code-input" maxlength="1" id="code1">
+      <input type="text" class="code-input" maxlength="1" id="code2">
+      <input type="text" class="code-input" maxlength="1" id="code3">
+      <input type="text" class="code-input" maxlength="1" id="code4">
+      <input type="text" class="code-input" maxlength="1" id="code5">
+      <input type="text" class="code-input" maxlength="1" id="code6">
+    </div>
+    
+    <button type="button" class="btn" id="verifyButton">Verificar</button>
+    <a href="#" class="link" id="resendCode">Não recebeu o código? Reenviar</a>
+  </div>
+
+  <script>
+    // Elementos da página
+    const loginContainer = document.getElementById('loginContainer');
+    const registerContainer = document.getElementById('registerContainer');
+    const verificationContainer = document.getElementById('verificationContainer');
+    const showRegisterLink = document.getElementById('showRegister');
+    const showLoginLink = document.getElementById('showLogin');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const resendCodeLink = document.getElementById('resendCode');
+    const verifyButton = document.getElementById('verifyButton');
+    
+    // Elementos de entrada de código
+    const codeInputs = document.querySelectorAll('.code-input');
+    
+    // URLs dos webhooks
+    const loginWebhookUrl = 'https://webhook.dev.solandox.com/webhook/login';
+    const tokenWebhookUrl = 'https://webhook.dev.solandox.com/webhook/token';
+    
+    // Variáveis para armazenar dados do usuário atual
+    let currentUserName = '';
+    let currentUserEmail = '';
+    
+    // Navegação entre páginas
+    showRegisterLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      loginContainer.style.display = 'none';
+      registerContainer.style.display = 'block';
+    });
+    
+    showLoginLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      registerContainer.style.display = 'none';
+      loginContainer.style.display = 'block';
+    });
+    
+    // Função para mostrar a página de verificação
+    function showVerificationPage() {
+      loginContainer.style.display = 'none';
+      registerContainer.style.display = 'none';
+      verificationContainer.style.display = 'block';
+      codeInputs[0].focus();
+    }
+    
+    // Configuração dos inputs de código
+    codeInputs.forEach((input, index) => {
+      input.addEventListener('keyup', function(e) {
+        if (e.key >= 0 && e.key <= 9) {
+          if (index < codeInputs.length - 1) {
+            codeInputs[index + 1].focus();
+          }
+        } else if (e.key === 'Backspace') {
+          if (index > 0) {
+            codeInputs[index - 1].focus();
+          }
+        }
+      });
+    });
+    
+    // Formulário de login
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      
+      // Atualizar variáveis de usuário atual
+      currentUserEmail = email;
+      
+      try {
+        // Enviar dados para o webhook de login com o tipo de ação
+        const loginResponse = await fetch(loginWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            password: password,
+            action: 'login'  // Adicionando o tipo de ação
+          })
+        });
+        
+        // Solicitar token incluindo o nome do usuário (mesmo que seja vazio neste caso)
+        const tokenResponse = await fetch(tokenWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            userName: ''  // Nome vazio para login, pois não temos o nome no formulário de login
+          })
+        });
+        
+        // Mostrar página de verificação de código
+        showVerificationPage();
+        
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Ocorreu um erro. Por favor, tente novamente.');
+      }
+    });
+    
+    // Formulário de cadastro
+    registerForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const fullName = document.getElementById('fullName').value;
+      const email = document.getElementById('registerEmail').value;
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      
+      // Atualizar variáveis de usuário atual
+      currentUserName = fullName;
+      currentUserEmail = email;
+      
+      // Verificar se as senhas coincidem
+      if (password !== confirmPassword) {
+        alert('As senhas não coincidem. Por favor, tente novamente.');
+        return;
+      }
+      
+      try {
+        // Enviar dados para o webhook de cadastro com o tipo de ação
+        const registerResponse = await fetch(loginWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            fullName: fullName,
+            email: email,
+            password: password,
+            action: 'cadastro'  // Adicionando o tipo de ação
+          })
+        });
+        
+        // Solicitar token incluindo o nome do usuário
+        const tokenResponse = await fetch(tokenWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: email,
+            userName: fullName  // Adicionando o nome do usuário
+          })
+        });
+        
+        // Mostrar página de verificação de código
+        showVerificationPage();
+        
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Ocorreu um erro. Por favor, tente novamente.');
+      }
+    });
+    
+    // Reenviar código
+    resendCodeLink.addEventListener('click', async function(e) {
+      e.preventDefault();
+      
+      if (!currentUserEmail) {
+        alert('Não foi possível identificar seu email. Por favor, volte e tente novamente.');
+        return;
+      }
+      
+      try {
+        // Solicitar novo token incluindo o nome do usuário
+        const tokenResponse = await fetch(tokenWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: currentUserEmail,
+            userName: currentUserName  // Inclui o nome do usuário (mesmo que esteja vazio)
+          })
+        });
+        
+        alert('Um novo código foi enviado para seu email.');
+        
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Ocorreu um erro ao reenviar o código. Por favor, tente novamente.');
+      }
+    });
+    
+    // Verificar código
+    verifyButton.addEventListener('click', function() {
+      // Construir o código completo a partir dos inputs
+      let verificationCode = '';
+      codeInputs.forEach(input => {
+        verificationCode += input.value;
+      });
+      
+      if (verificationCode.length !== 6) {
+        alert('Por favor, digite o código de 6 dígitos completo.');
+        return;
+      }
+      
+      // Aqui você poderia adicionar a lógica para verificar o código com o backend
+      alert('Código verificado com sucesso! Você será redirecionado.');
+      
+      // Redirecionamento simulado (em um caso real, isso seria feito após confirmação do backend)
+      setTimeout(() => {
+        loginContainer.style.display = 'block';
+        verificationContainer.style.display = 'none';
+        alert('Login realizado com sucesso!');
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
