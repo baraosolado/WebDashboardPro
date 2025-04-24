@@ -85,8 +85,8 @@ export default function AuthPage() {
     }
   };
 
-  // Função para solicitar token de verificação
-  const requestToken = async (email: string, userName: string = "") => {
+  // Função para solicitar token de verificação para login
+  const requestToken = async (email: string) => {
     try {
       await fetch("https://webhook.dev.solandox.com/webhook/token", {
         method: "POST",
@@ -95,7 +95,7 @@ export default function AuthPage() {
         },
         body: JSON.stringify({
           email,
-          userName
+          action: "login"
         }),
       });
     } catch (error) {
@@ -132,15 +132,36 @@ export default function AuthPage() {
     setLoading(true);
     
     try {
-      // Enviar dados para o webhook de cadastro
-      await sendToWebhook({...data, action: 'cadastro'}, "signup");
-      await requestToken(data.email, data.fullName);
+      // Fazer o cadastro diretamente, sem verificação de token
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.fullName,
+          email: data.email,
+          phone: data.phone,
+          password: data.password,
+        }),
+      });
       
-      // Mostrar tela de verificação
-      setShowLogin(false);
-      setShowVerification(true);
+      const result = await response.json();
       
-      // Continue o fluxo normal de cadastro após a verificação (implementado em handleVerification)
+      if (response.ok && result.success) {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Agora você pode fazer login com suas credenciais.",
+        });
+        // Mostrar a tela de login após o cadastro bem-sucedido
+        setShowLogin(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro no cadastro",
+          description: result.message || "Não foi possível criar sua conta. Tente novamente.",
+        });
+      }
     } catch (error) {
       console.error("Erro no cadastro:", error);
       toast({
@@ -158,79 +179,41 @@ export default function AuthPage() {
     const code = codeInputs.join('');
     
     try {
-      // Simulação de verificação bem-sucedida
-      // Na implementação real, você enviaria o código para a API
+      // Verificar o código de autenticação (simulado)
+      // Em uma implementação real, você enviaria o código para validação no servidor
       
-      // Atualizar estado de autenticação e redirecionar
-      const formData = showLogin ? loginForm.getValues() : registerForm.getValues();
-      const username = (formData as RegisterFormValues).fullName || formData.email;
+      // Pegando os dados do formulário de login
+      const formData = loginForm.getValues();
       
-      // Se estiver no fluxo de login
-      if (showLogin) {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: formData.email,
-            password: formData.password,
-          }),
+      // Após validar o código, chamar o endpoint de login
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.email,
+          password: formData.password,
+          token: code // Enviando o código de verificação
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        login(result.user.username);
+        toast({
+          title: "Login realizado com sucesso!",
+          description: `Bem-vindo(a) de volta!`,
         });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-          login(result.user.username);
-          toast({
-            title: "Login realizado com sucesso!",
-            description: `Bem-vindo(a) de volta!`,
-          });
-          navigate("/");
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erro no login",
-            description: result.message || "Credenciais inválidas. Tente novamente.",
-          });
-          setShowVerification(false);
-          setShowLogin(true);
-        }
-      } 
-      // Se estiver no fluxo de cadastro
-      else {
-        const registerData = registerForm.getValues();
-        const response = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            username: registerData.fullName,
-            email: registerData.email,
-            phone: registerData.phone,
-            password: registerData.password,
-          }),
+        navigate("/");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro na verificação",
+          description: result.message || "O código inserido é inválido ou expirou. Tente novamente.",
         });
-        
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-          login(result.user.username);
-          toast({
-            title: "Conta criada com sucesso!",
-            description: "Bem-vindo(a) ao SolandoX!",
-          });
-          navigate("/");
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erro no cadastro",
-            description: result.message || "Não foi possível criar sua conta. Tente novamente.",
-          });
-          setShowVerification(false);
-          setShowLogin(false);
-        }
+        // Não voltar para tela de login, permitir nova tentativa
       }
     } catch (error) {
       console.error("Erro na verificação:", error);
@@ -267,8 +250,9 @@ export default function AuthPage() {
   };
 
   const resendCode = async () => {
-    const formData = showLogin ? loginForm.getValues() : registerForm.getValues();
-    await requestToken(formData.email, (formData as RegisterFormValues).fullName || '');
+    // Agora apenas para o login
+    const formData = loginForm.getValues();
+    await requestToken(formData.email);
     toast({
       title: "Código reenviado",
       description: "Um novo código foi enviado para seu email.",
