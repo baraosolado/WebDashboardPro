@@ -11,8 +11,8 @@ import { z } from "zod";
 import { supabase } from "./supabase";
 import fetch from "node-fetch";
 
-// Importar mock do webhook para testes
-import { webhookMockHandler } from './webhook-mock';
+// O sistema está configurado para enviar requisições diretamente para
+// https://webhook.dev.solandox.com/webhook/fintrack
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data
@@ -26,16 +26,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         body: req.body
       });
       
-      // Verificar se devemos usar o mock ou tentar conectar ao n8n real
-      const useMock = process.env.USE_WEBHOOK_MOCK === 'true' || true; // Por padrão usar mock
-      
-      if (useMock) {
-        console.log("Usando mock do webhook para testes");
-        return webhookMockHandler(req, res);
-      }
-      
-      // Se não usar mock, tentar conectar ao n8n real
-      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || "http://localhost:5678/webhook/fintrack";
+      // Sempre usar o webhook externo solicitado pelo usuário
+      console.log("Encaminhando para webhook externo");
+      const n8nWebhookUrl = "https://webhook.dev.solandox.com/webhook/fintrack";
       
       const response = await fetch(n8nWebhookUrl, {
         method: "POST",
@@ -56,7 +49,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log("Resposta do webhook n8n:", {
         status: response.status,
-        data: typeof responseData === 'object' ? JSON.stringify(responseData).substring(0, 100) + '...' : responseData.substring(0, 100) + '...'
+        data: responseData ? 
+          (typeof responseData === 'object' ? 
+            JSON.stringify(responseData).substring(0, 100) + '...' : 
+            String(responseData).substring(0, 100) + '...') :
+          'Sem dados'
       });
       
       res.status(response.status);
