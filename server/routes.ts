@@ -431,7 +431,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Usuário existe, enviar dados para o webhook para verificação
           try {
-            await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+            // Usar nosso próprio proxy para o webhook
+            await fetch("/api/webhooks/n8n", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -476,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Enviar para o webhook para validar o token
           try {
-            const webhookResponse = await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+            const webhookResponse = await fetch("/api/webhooks/n8n", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -575,7 +576,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Enviar para o webhook para criar usuário através do n8n
       try {
-        const webhookResponse = await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+        const webhookResponse = await fetch("/api/webhooks/n8n", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

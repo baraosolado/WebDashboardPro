@@ -5,7 +5,9 @@
       "parameters": {
         "path": "webhook/fintrack",
         "responseMode": "responseNode",
-        "options": {}
+        "options": {
+          "allowedCredentials": "include"
+        }
       },
       "id": "webhook-principal",
       "name": "Webhook Principal",
