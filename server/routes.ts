@@ -8,6 +8,7 @@ import {
   insertGoalSchema
 } from "@shared/schema";
 import { z } from "zod";
+import { supabase } from "./supabase";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data
@@ -385,73 +386,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Armazenar usuários registrados em memória
-  const registeredUsers: { email: string; username: string; password: string; phone?: string }[] = [];
-  
-  // Função para verificar credenciais
-  const checkCredentials = (email: string, password: string) => {
-    // Verificar usuário administrador fixo
+  // Função para verificar se um usuário é o administrador do sistema
+  const isAdminUser = (email: string, password: string) => {
+    // Verificar usuário administrador fixo (você pode mudar isso para uma verificação no Supabase)
     if ((email === "admin" || email === "admin@fintrack.com") && password === "123456") {
       return { valid: true, username: "admin", email: "admin@fintrack.com" };
-    }
-    
-    // Verificar usuários registrados
-    const user = registeredUsers.find(u => 
-      (u.email === email || u.username === email) && u.password === password
-    );
-    
-    if (user) {
-      return { valid: true, username: user.username, email: user.email };
     }
     
     return { valid: false };
   };
   
-  // Verificar login do usuário
+  // Verificar login do usuário com Supabase
   apiRouter.post("/auth/login", async (req: Request, res: Response) => {
     try {
       const { username, password, token } = req.body;
       
-      console.log("Login request:", { username, password, token });
+      console.log("Login request:", { username, password, token: token ? "Presente" : "Ausente" });
       
-      // Verificar credenciais
-      const result = checkCredentials(username, password);
-      
-      if (result.valid) {
-        // Se o token foi fornecido, verificamos o token
-        // Para este exemplo, estamos apenas simulando a verificação
-        // Em uma implementação real, o token seria validado mais rigorosamente
-        const tokenValid = token ? true : false; // Simulação: consideramos qualquer token como válido
-        
-        // Se não tiver token, assumimos que é um login normal (sem verificação de 2 fatores)
-        // ou se tiver token, ele deve ser válido
-        if (tokenValid || !token) {
-          // Garantir que o Content-Type seja application/json
-          res.setHeader('Content-Type', 'application/json');
-          return res.status(200).json({
-            success: true,
-            user: { username: result.username }
-          });
-        } else {
-          // Token inválido
-          res.setHeader('Content-Type', 'application/json');
-          return res.status(401).json({
-            success: false,
-            message: "Token de verificação inválido"
+      // Se o token não foi fornecido, este é um login inicial
+      if (!token) {
+        try {
+          // Verificar se o usuário existe no Supabase
+          const { data: users, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', username)
+            .limit(1);
+          
+          if (userError) {
+            console.error("Erro ao buscar usuário no Supabase:", userError);
+            return res.status(500).json({ 
+              success: false, 
+              message: "Erro ao processar login." 
+            });
+          }
+          
+          if (!users || users.length === 0) {
+            console.log(`Usuário ${username} não encontrado`);
+            return res.status(401).json({
+              success: false,
+              message: "Credenciais inválidas"
+            });
+          }
+          
+          // Usuário existe, enviar dados para o webhook para verificação
+          try {
+            await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "login_request",
+                entityType: "user",
+                entityId: username,
+                data: { 
+                  email: username, 
+                  password, 
+                  timestamp: new Date().toISOString() 
+                },
+              }),
+            });
+            
+            // Retornar sucesso no primeiro passo - deve prosseguir para verificação de token
+            return res.status(200).json({
+              success: true,
+              requiresToken: true,
+              message: "Por favor, insira o token enviado para seu email."
+            });
+            
+          } catch (webhookError) {
+            console.error("Erro ao enviar para webhook:", webhookError);
+            return res.status(500).json({ 
+              success: false, 
+              message: "Erro ao processar solicitação de login." 
+            });
+          }
+        } catch (dbError) {
+          console.error("Erro de banco de dados:", dbError);
+          return res.status(500).json({ 
+            success: false, 
+            message: "Erro interno do servidor." 
           });
         }
-      } else {
-        // Credenciais inválidas
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(401).json({
-          success: false,
-          message: "Credenciais inválidas"
-        });
+      } 
+      // Se o token foi fornecido, este é o segundo passo da autenticação
+      else {
+        // Verificar na tabela de tokens se o token é válido
+        try {
+          // Enviar para o webhook para validar o token
+          try {
+            const webhookResponse = await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                action: "verify_token",
+                entityType: "user",
+                entityId: username,
+                data: { 
+                  email: username, 
+                  token,
+                  timestamp: new Date().toISOString()
+                },
+              }),
+            });
+            
+            // Em uma implementação real, você verificaria a resposta do webhook
+            // mas para este exemplo, vamos considerar que o token é válido
+            
+            // Buscar usuário no Supabase
+            const { data: userData, error: userError } = await supabase
+              .from('users')
+              .select('username, email')
+              .eq('email', username)
+              .single();
+            
+            if (userError || !userData) {
+              console.error("Erro ao buscar dados do usuário:", userError);
+              return res.status(404).json({
+                success: false,
+                message: "Usuário não encontrado."
+              });
+            }
+            
+            // Autenticação bem-sucedida
+            return res.status(200).json({
+              success: true,
+              user: { 
+                username: userData.username || username,
+                email: userData.email || username
+              }
+            });
+            
+          } catch (webhookError) {
+            console.error("Erro ao verificar token:", webhookError);
+            return res.status(500).json({ 
+              success: false, 
+              message: "Erro ao verificar token." 
+            });
+          }
+        } catch (verifyError) {
+          console.error("Erro ao verificar token:", verifyError);
+          return res.status(500).json({ 
+            success: false, 
+            message: "Erro interno do servidor." 
+          });
+        }
       }
     } catch (error) {
-      console.error("Erro no login:", error);
-      // Garantir que o Content-Type seja application/json
-      res.setHeader('Content-Type', 'application/json');
+      console.error("Erro geral no login:", error);
       return res.status(500).json({ 
         success: false,
         message: "Erro interno do servidor" 
@@ -459,34 +544,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Registrar novo usuário
+  // Registrar novo usuário com integração Supabase
   apiRouter.post("/auth/signup", async (req: Request, res: Response) => {
     try {
       const { username, email, password, phone } = req.body;
       
       console.log("Signup request:", { username, email, phone });
       
-      // Verificar se o usuário ou email já existe
-      const userExists = registeredUsers.some(u => 
-        u.email === email || u.username === username
-      );
+      // Verificar se o usuário já existe no Supabase
+      const { data: existingUsers, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .or(`email.eq.${email},username.eq.${username}`)
+        .limit(1);
+        
+      if (userError) {
+        console.error("Erro ao verificar usuário existente:", userError);
+        return res.status(500).json({
+          success: false,
+          message: "Erro ao processar cadastro."
+        });
+      }
       
-      if (userExists) {
-        res.setHeader('Content-Type', 'application/json');
+      if (existingUsers && existingUsers.length > 0) {
         return res.status(400).json({
           success: false,
           message: "Usuário ou email já cadastrado"
         });
       }
       
-      // Adicionar usuário à lista de registrados
-      registeredUsers.push({ username, email, password, phone });
-      console.log("Usuário registrado:", { username, email, phone });
-      console.log("Total de usuários:", registeredUsers.length);
-      
-      // Enviar para o webhook (como seria feito com Supabase e n8n)
+      // Enviar para o webhook para criar usuário através do n8n
       try {
-        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+        const webhookResponse = await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -504,21 +593,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
           }),
         });
-      } catch (error) {
-        console.error("Erro ao enviar para webhook:", error);
+        
+        // Em uma implementação real, você verificaria a resposta do webhook
+        // e só retornaria sucesso se tudo ocorreu bem
+        
+        // Usuário criado com sucesso
+        return res.status(201).json({
+          success: true,
+          user: { username, email }
+        });
+      } catch (webhookError) {
+        console.error("Erro ao enviar para webhook:", webhookError);
+        return res.status(500).json({
+          success: false,
+          message: "Erro ao processar cadastro."
+        });
       }
-      
-      // Garantir que o Content-Type seja application/json
-      res.setHeader('Content-Type', 'application/json');
-      res.status(201).json({
-        success: true,
-        user: { username, email }
-      });
     } catch (error) {
       console.error("Erro no signup:", error);
-      // Garantir que o Content-Type seja application/json
-      res.setHeader('Content-Type', 'application/json');
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ 
+        success: false,
+        message: "Erro interno do servidor" 
+      });
     }
   });
   

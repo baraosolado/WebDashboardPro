@@ -89,37 +89,51 @@ export default function AuthPage() {
     setLoading(true);
     
     try {
-      // Enviar dados para o webhook de login - primeiro envio
-      try {
-        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "login_request",
-            entityType: "user",
-            entityId: data.email,
-            data: { 
-              email: data.email, 
-              password: data.password,
-              timestamp: new Date().toISOString() 
-            },
-          }),
+      // Enviar dados para endpoint de login
+      const loginResponse = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.email,
+          password: data.password
+        }),
+      });
+      
+      const loginResult = await loginResponse.json();
+      
+      if (loginResponse.ok && loginResult.success) {
+        // Se o login requer token, solicitar token e mostrar tela de verificação
+        if (loginResult.requiresToken) {
+          console.log("Login inicial bem-sucedido, verificação de token necessária");
+          
+          // Solicitar o token por email (esta etapa seria feita pelo backend automaticamente)
+          await requestToken(data.email);
+          
+          // Mostrar tela de verificação
+          setShowLogin(false);
+          setShowVerification(true);
+        } else {
+          // Login direto sem token (não deve acontecer neste fluxo)
+          console.log("Login direto sem token");
+          login(loginResult.user.username);
+          toast({
+            title: "Login realizado com sucesso!",
+            description: `Bem-vindo(a) de volta!`,
+          });
+          navigate("/");
+        }
+      } else {
+        // Login falhou
+        toast({
+          variant: "destructive",
+          title: "Erro no login",
+          description: loginResult.message || "Credenciais inválidas. Tente novamente.",
         });
-      } catch (webhookError) {
-        console.error("Erro ao enviar para webhook:", webhookError);
-        throw new Error("Erro ao processar login. Por favor, tente novamente.");
       }
-      
-      // Solicitar o token para verificação
-      await requestToken(data.email);
-      
-      // Mostrar tela de verificação
-      setShowLogin(false);
-      setShowVerification(true);
     } catch (error) {
-      console.error("Erro ao solicitar código:", error);
+      console.error("Erro ao processar login:", error);
       toast({
         variant: "destructive",
         title: "Erro ao processar login",
@@ -184,31 +198,7 @@ export default function AuthPage() {
       // Pegando os dados do formulário de login
       const formData = loginForm.getValues();
       
-      // Enviar apenas o token para o webhook para verificação
-      // Este é o segundo envio para o webhook no fluxo de login
-      try {
-        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "verify_token",
-            entityType: "user",
-            entityId: formData.email,
-            data: { 
-              email: formData.email, 
-              token: code,
-              timestamp: new Date().toISOString() 
-            },
-          }),
-        });
-      } catch (webhookError) {
-        console.error("Erro ao enviar para webhook:", webhookError);
-        throw new Error("Erro ao processar a verificação. Por favor, tente novamente.");
-      }
-      
-      // Após enviar ao webhook, chamar o endpoint de login
+      // Chamar o endpoint de login com o token para completar a autenticação
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -224,12 +214,19 @@ export default function AuthPage() {
       const result = await response.json();
       
       if (response.ok && result.success) {
+        // Login com sucesso, armazenar dados do usuário e redirecionar
+        console.log("Login realizado com sucesso:", result);
         login(result.user.username);
+        
         toast({
           title: "Login realizado com sucesso!",
           description: `Bem-vindo(a) de volta!`,
         });
-        navigate("/");
+        
+        // Redirecionar para a página principal
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
       } else {
         toast({
           variant: "destructive",
