@@ -2,7 +2,7 @@
 
 -- Tabela de usuários
 CREATE TABLE public.users (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT auth.uid(),
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL, -- Armazenar hash da senha
@@ -29,7 +29,7 @@ CREATE TABLE public.categories (
     name VARCHAR(255) NOT NULL,
     type VARCHAR(10) NOT NULL CHECK (type IN ('income', 'expense')),
     color VARCHAR(20) DEFAULT '#4CAF50',
-    user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -41,7 +41,7 @@ CREATE TABLE public.transactions (
     date DATE NOT NULL,
     type VARCHAR(10) NOT NULL CHECK (type IN ('income', 'expense')),
     category_id INTEGER REFERENCES public.categories(id) ON DELETE SET NULL,
-    user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE,
     attachments JSONB DEFAULT '[]'::jsonb,
@@ -54,7 +54,7 @@ CREATE TABLE public.budgets (
     category_id INTEGER REFERENCES public.categories(id) ON DELETE SET NULL,
     amount DECIMAL(10,2) NOT NULL,
     period VARCHAR(20) NOT NULL CHECK (period IN ('mensal', 'semanal', 'anual')),
-    user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     start_date DATE DEFAULT CURRENT_DATE,
     end_date DATE,
@@ -68,7 +68,7 @@ CREATE TABLE public.goals (
     target_amount DECIMAL(10,2) NOT NULL,
     current_amount DECIMAL(10,2) DEFAULT 0,
     target_date DATE NOT NULL,
-    user_id INTEGER REFERENCES public.users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE,
     description TEXT,
