@@ -486,11 +486,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Usuário existe, enviar dados para o webhook para verificação
           try {
-            // Usar nosso próprio proxy para o webhook
-            await fetch("/api/webhooks/n8n", {
+            // Chamar o webhook externo diretamente
+            console.log("Enviando solicitação de login para o webhook externo");
+            const webhookUrl = "https://webhook.dev.solandox.com/webhook/fintrack";
+            const response = await fetch(webhookUrl, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json"
               },
               body: JSON.stringify({
                 action: "login_request",
@@ -503,6 +506,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 },
               }),
             });
+            
+            console.log("Resposta do webhook (login):", {
+              status: response.status,
+              statusText: response.statusText
+            });
+            
+            // Verificar a resposta do webhook
+            if (!response.ok) {
+              console.error("Erro na resposta do webhook:", response.status, response.statusText);
+              const errorText = await response.text();
+              console.error("Detalhes do erro:", errorText);
+              throw new Error("Falha na comunicação com o webhook")
+            }
             
             // Retornar sucesso no primeiro passo - deve prosseguir para verificação de token
             return res.status(200).json({
@@ -532,10 +548,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           // Enviar para o webhook para validar o token
           try {
-            const webhookResponse = await fetch("/api/webhooks/n8n", {
+            console.log("Enviando solicitação de verificação de token para o webhook externo");
+            const webhookUrl = "https://webhook.dev.solandox.com/webhook/fintrack";
+            const webhookResponse = await fetch(webhookUrl, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json"
               },
               body: JSON.stringify({
                 action: "verify_token",
@@ -548,6 +567,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 },
               }),
             });
+            
+            console.log("Resposta do webhook (verificação de token):", {
+              status: webhookResponse.status,
+              statusText: webhookResponse.statusText
+            });
+            
+            // Verificar a resposta do webhook
+            if (!webhookResponse.ok) {
+              console.error("Erro na resposta do webhook:", webhookResponse.status, webhookResponse.statusText);
+              const errorText = await webhookResponse.text();
+              console.error("Detalhes do erro:", errorText);
+              throw new Error("Falha na comunicação com o webhook")
+            }
             
             // Em uma implementação real, você verificaria a resposta do webhook
             // mas para este exemplo, vamos considerar que o token é válido
@@ -631,10 +663,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Enviar para o webhook para criar usuário através do n8n
       try {
-        const webhookResponse = await fetch("/api/webhooks/n8n", {
+        console.log("Enviando solicitação de registro de usuário para o webhook externo");
+        const webhookUrl = "https://webhook.dev.solandox.com/webhook/fintrack";
+        const webhookResponse = await fetch(webhookUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Accept": "application/json"
           },
           body: JSON.stringify({
             action: "signup",
@@ -649,6 +684,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
           }),
         });
+        
+        console.log("Resposta do webhook (signup):", {
+          status: webhookResponse.status,
+          statusText: webhookResponse.statusText
+        });
+        
+        // Verificar a resposta do webhook
+        if (!webhookResponse.ok) {
+          console.error("Erro na resposta do webhook:", webhookResponse.status, webhookResponse.statusText);
+          const errorText = await webhookResponse.text();
+          console.error("Detalhes do erro:", errorText);
+          throw new Error("Falha na comunicação com o webhook")
+        }
         
         // Em uma implementação real, você verificaria a resposta do webhook
         // e só retornaria sucesso se tudo ocorreu bem
