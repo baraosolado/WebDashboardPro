@@ -9,10 +9,56 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { supabase } from "./supabase";
+import fetch from "node-fetch";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data
   await storage.seedInitialData();
+
+  // Configurar middleware do proxy webhook
+  app.use('/api/webhooks/n8n', async (req: Request, res: Response) => {
+    try {
+      console.log("Recebida solicitação para proxy do webhook n8n:", {
+        method: req.method,
+        body: req.body
+      });
+      
+      const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || "http://localhost:5678/webhook/fintrack";
+      
+      const response = await fetch(n8nWebhookUrl, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(req.body)
+      });
+      
+      let responseData;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        responseData = await response.json();
+      } else {
+        responseData = await response.text();
+      }
+      
+      console.log("Resposta do webhook n8n:", {
+        status: response.status,
+        data: typeof responseData === 'object' ? JSON.stringify(responseData).substring(0, 100) + '...' : responseData.substring(0, 100) + '...'
+      });
+      
+      res.status(response.status);
+      
+      if (typeof responseData === 'object') {
+        res.json(responseData);
+      } else {
+        res.send(responseData);
+      }
+    } catch (error) {
+      console.error("Erro ao encaminhar para n8n:", error);
+      res.status(500).json({ success: false, message: "Erro interno" });
+    }
+  });
 
   // Set up API routes
   const apiRouter = express.Router();
