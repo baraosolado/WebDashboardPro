@@ -64,26 +64,8 @@ export default function AuthPage() {
     },
   });
 
-  // Função para enviar dados para o webhook
-  const sendToWebhook = async (data: any, action: string) => {
-    try {
-      await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action,
-          entityType: "user",
-          entityId: data.email || data.username,
-          data,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-    } catch (error) {
-      console.error("Erro ao enviar para webhook:", error);
-    }
-  };
+  // Removida a função sendToWebhook, pois o webhook será chamado
+  // apenas durante a verificação do token
 
   // Função para solicitar token de verificação para login
   const requestToken = async (email: string) => {
@@ -107,21 +89,22 @@ export default function AuthPage() {
     setLoading(true);
     
     try {
-      // Enviar dados para o webhook de login
-      await sendToWebhook({...data, action: 'login'}, "login");
+      // Apenas solicitar o token para verificação
+      // Não enviar dados para o webhook ainda
       await requestToken(data.email);
       
-      // Mostrar tela de verificação
+      // Armazenar os dados de login e mostrar a tela de verificação
       setShowLogin(false);
       setShowVerification(true);
       
-      // Continue o fluxo normal de login após a verificação (implementado em handleVerification)
+      // O envio dos dados de login para o webhook será feito apenas após
+      // validação do token na função handleVerification
     } catch (error) {
-      console.error("Erro no login:", error);
+      console.error("Erro ao solicitar código:", error);
       toast({
         variant: "destructive",
-        title: "Erro no login",
-        description: "Ocorreu um erro ao tentar fazer login. Tente novamente.",
+        title: "Erro ao solicitar código",
+        description: "Não foi possível enviar o código de verificação. Tente novamente.",
       });
     }
     
@@ -179,13 +162,35 @@ export default function AuthPage() {
     const code = codeInputs.join('');
     
     try {
-      // Verificar o código de autenticação (simulado)
-      // Em uma implementação real, você enviaria o código para validação no servidor
-      
       // Pegando os dados do formulário de login
       const formData = loginForm.getValues();
       
-      // Após validar o código, chamar o endpoint de login
+      // Enviar dados para o webhook junto com o token para verificação
+      // Esta é a única chamada ao webhook durante o fluxo de login
+      try {
+        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "login",
+            entityType: "user",
+            entityId: formData.email,
+            data: { 
+              email: formData.email, 
+              password: formData.password,
+              token: code,
+              timestamp: new Date().toISOString() 
+            },
+          }),
+        });
+      } catch (webhookError) {
+        console.error("Erro ao enviar para webhook:", webhookError);
+        throw new Error("Erro ao processar a verificação. Por favor, tente novamente.");
+      }
+      
+      // Após enviar ao webhook, chamar o endpoint de login
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -220,7 +225,7 @@ export default function AuthPage() {
       toast({
         variant: "destructive",
         title: "Erro na verificação",
-        description: "Ocorreu um erro ao verificar o código. Tente novamente.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro ao verificar o código. Tente novamente.",
       });
     }
     
