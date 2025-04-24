@@ -11,10 +11,13 @@ import { z } from "zod";
 import { supabase } from "./supabase";
 import fetch from "node-fetch";
 
+// Importar mock do webhook para testes
+import { webhookMockHandler } from './webhook-mock';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed initial data
   await storage.seedInitialData();
-
+  
   // Configurar middleware do proxy webhook
   app.use('/api/webhooks/n8n', async (req: Request, res: Response) => {
     try {
@@ -23,6 +26,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         body: req.body
       });
       
+      // Verificar se devemos usar o mock ou tentar conectar ao n8n real
+      const useMock = process.env.USE_WEBHOOK_MOCK === 'true' || true; // Por padrão usar mock
+      
+      if (useMock) {
+        console.log("Usando mock do webhook para testes");
+        return webhookMockHandler(req, res);
+      }
+      
+      // Se não usar mock, tentar conectar ao n8n real
       const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL || "http://localhost:5678/webhook/fintrack";
       
       const response = await fetch(n8nWebhookUrl, {
