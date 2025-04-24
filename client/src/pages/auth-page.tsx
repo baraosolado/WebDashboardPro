@@ -89,22 +89,41 @@ export default function AuthPage() {
     setLoading(true);
     
     try {
-      // Apenas solicitar o token para verificação
-      // Não enviar dados para o webhook ainda
+      // Enviar dados para o webhook de login - primeiro envio
+      try {
+        await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "login_request",
+            entityType: "user",
+            entityId: data.email,
+            data: { 
+              email: data.email, 
+              password: data.password,
+              timestamp: new Date().toISOString() 
+            },
+          }),
+        });
+      } catch (webhookError) {
+        console.error("Erro ao enviar para webhook:", webhookError);
+        throw new Error("Erro ao processar login. Por favor, tente novamente.");
+      }
+      
+      // Solicitar o token para verificação
       await requestToken(data.email);
       
-      // Armazenar os dados de login e mostrar a tela de verificação
+      // Mostrar tela de verificação
       setShowLogin(false);
       setShowVerification(true);
-      
-      // O envio dos dados de login para o webhook será feito apenas após
-      // validação do token na função handleVerification
     } catch (error) {
       console.error("Erro ao solicitar código:", error);
       toast({
         variant: "destructive",
-        title: "Erro ao solicitar código",
-        description: "Não foi possível enviar o código de verificação. Tente novamente.",
+        title: "Erro ao processar login",
+        description: error instanceof Error ? error.message : "Não foi possível processar o login. Tente novamente.",
       });
     }
     
@@ -165,8 +184,8 @@ export default function AuthPage() {
       // Pegando os dados do formulário de login
       const formData = loginForm.getValues();
       
-      // Enviar dados para o webhook junto com o token para verificação
-      // Esta é a única chamada ao webhook durante o fluxo de login
+      // Enviar apenas o token para o webhook para verificação
+      // Este é o segundo envio para o webhook no fluxo de login
       try {
         await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
           method: "POST",
@@ -174,12 +193,11 @@ export default function AuthPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            action: "login",
+            action: "verify_token",
             entityType: "user",
             entityId: formData.email,
             data: { 
               email: formData.email, 
-              password: formData.password,
               token: code,
               timestamp: new Date().toISOString() 
             },
