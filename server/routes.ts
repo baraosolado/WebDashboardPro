@@ -410,47 +410,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Verificar login do usuário
   apiRouter.post("/auth/login", async (req: Request, res: Response) => {
     try {
-      const { username, password } = req.body;
+      const { username, password, token } = req.body;
       
-      console.log("Login request:", { username, password });
+      console.log("Login request:", { username, password, token });
       
       // Verificar credenciais
       const result = checkCredentials(username, password);
       
       if (result.valid) {
-        // Enviar para o webhook (como seria feito com Supabase e n8n)
-        try {
-          await fetch("https://webhook.dev.solandox.com/webhook/fintrack", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              action: "login",
-              entityType: "user",
-              entityId: result.email,
-              data: { 
-                email: result.email, 
-                username: result.username, 
-                password, 
-                timestamp: new Date().toISOString() 
-              },
-            }),
-          });
-        } catch (error) {
-          console.error("Erro ao enviar para webhook:", error);
-        }
+        // Se o token foi fornecido, verificamos o token
+        // Para este exemplo, estamos apenas simulando a verificação
+        // Em uma implementação real, o token seria validado mais rigorosamente
+        const tokenValid = token ? true : false; // Simulação: consideramos qualquer token como válido
         
-        // Garantir que o Content-Type seja application/json
-        res.setHeader('Content-Type', 'application/json');
-        res.status(200).json({
-          success: true,
-          user: { username: result.username }
-        });
+        // Se não tiver token, assumimos que é um login normal (sem verificação de 2 fatores)
+        // ou se tiver token, ele deve ser válido
+        if (tokenValid || !token) {
+          // Garantir que o Content-Type seja application/json
+          res.setHeader('Content-Type', 'application/json');
+          return res.status(200).json({
+            success: true,
+            user: { username: result.username }
+          });
+        } else {
+          // Token inválido
+          res.setHeader('Content-Type', 'application/json');
+          return res.status(401).json({
+            success: false,
+            message: "Token de verificação inválido"
+          });
+        }
       } else {
-        // Garantir que o Content-Type seja application/json
+        // Credenciais inválidas
         res.setHeader('Content-Type', 'application/json');
-        res.status(401).json({
+        return res.status(401).json({
           success: false,
           message: "Credenciais inválidas"
         });
@@ -459,7 +452,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Erro no login:", error);
       // Garantir que o Content-Type seja application/json
       res.setHeader('Content-Type', 'application/json');
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ 
+        success: false,
+        message: "Erro interno do servidor" 
+      });
     }
   });
   
